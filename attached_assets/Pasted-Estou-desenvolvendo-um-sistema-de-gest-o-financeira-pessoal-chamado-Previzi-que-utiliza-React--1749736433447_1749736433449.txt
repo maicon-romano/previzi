@@ -1,0 +1,105 @@
+Estou desenvolvendo um sistema de gestão financeira pessoal chamado **Previzi**, que utiliza React, Tailwind CSS e Firebase (Firestore e Auth). A seguir estão as instruções detalhadas para ajustar o sistema em todas as páginas e funcionalidades. O foco é tornar o sistema mais moderno, analítico e funcional para o usuário.
+
+---
+
+🎯 OBJETIVO GERAL:
+- Aplicar um design moderno, bonito e minimalista
+- Garantir responsividade total (100% mobile friendly)
+- Usar **modais** para criar/editar dados (sem redirecionar)
+- Usar **SweetAlert2** para exclusões, confirmações e alertas
+- Todas as atualizações devem ser em **tempo real** (sem recarregar a página)
+- Utilizar Firestore com `onSnapshot` ou React Query para sincronização ao vivo
+
+---
+
+🧩 AJUSTES POR TELA:
+
+---
+
+📊 TELA **DASHBOARD**:
+- ❌ Remover a "meta de economia", pois o destino do saldo varia por mês
+- ✅ Melhorar **visual da distribuição por categoria**:
+  - Gráfico de pizza com nome, valor e porcentagem da categoria
+- ✅ Criar **gráfico de evolução de saldo/receita**:
+  - Mostrar a evolução das receitas dos últimos 6 meses
+  - Incluir filtros: 3 meses, 6 meses, 12 meses e 18 meses
+- ✅ Manter a seção "Transações Recentes"
+- ✅ Seção "Próximos Vencimentos":
+  - Mostrar transações em aberto com data ≥ hoje
+  - Ordenar por data crescente
+
+---
+
+💸 TELA **TRANSAÇÕES**:
+- ✅ Cada transação deve ter **status editável**: "Pago" (verde) ou "Em aberto" (vermelho)
+- ✅ Criar **filtros dinâmicos** por:
+  - Tipo (Receita / Despesa)
+  - Categoria
+  - Data (mês anterior, atual, futuro)
+  - Status
+- ✅ Permitir visualizar:
+  - Transações de meses anteriores
+  - Transações agendadas para o futuro
+- ✅ Implementar suporte a **transações recorrentes variáveis**:
+  - Exemplo: conta de luz (mesmo dia, valor variável)
+  - Criar um campo: "Recorrente: sim/não", "Valor fixo/variável"
+
+---
+
+🔮 TELA **PREVISIBILIDADE**:
+- ✅ Exibir projeções **mensais** com:
+  - Receita prevista
+  - Despesa prevista
+  - Saldo estimado
+- ✅ Gerar **gráfico de linha** com saldo projetado para os próximos meses
+- ✅ Criar tabela analítica por mês com:
+  - Total de entradas, saídas e saldo
+  - Destaque em vermelho se saldo for negativo
+- ✅ Cálculos adicionais:
+  - Tempo estimado de saldo positivo/negativo
+  - Quanto é necessário receber para equilibrar o mês
+- ✅ Objetivo: tornar esta tela estratégica e decisiva com visual de **dashboard analítico**
+
+---
+
+📅 TELA **CALENDÁRIO**:
+- ✅ Exibir visual mensal com:
+  - Marcação de datas que possuem transações
+  - Verde para receitas, vermelho para despesas
+- ✅ Ao clicar em um dia, abrir modal com:
+  - Lista das transações daquele dia
+  - Botão para adicionar nova transação na data clicada
+
+---
+
+⚙️ TELA **CONFIGURAÇÕES**:
+- ✅ Permitir ajuste de **horário de lembrete** para organização financeira
+- ✅ Integração com **Resend API** para envio de relatórios por e-mail
+  - Usar a seguinte API key: `re_U1LwWuAv_rHAqDKrYD6t3vnmLZdwhbCdh`
+  - Permitir configurar envio:
+    - Diário / Semanal / Mensal
+    - Manual ou automático
+    - Relatório simples: saldo, próximas despesas, gráfico rápido
+
+---
+
+📦 COMPLEMENTOS:
+- Adotar **Tailwind CSS com classes utilitárias modernas**
+- Adicionar animações suaves (com Framer Motion, opcional)
+- Usar ícones semânticos (Lucide, Heroicons ou React Icons)
+- Evitar reloads manuais. Todas ações devem atualizar componentes na tela automaticamente
+
+---
+
+🛠️ TECNOLOGIAS USADAS:
+- React (JS ou TS)
+- Tailwind CSS
+- Firebase Auth
+- Firestore (com regras multiusuário)
+- SweetAlert2
+- Recharts ou Chart.js (para gráficos)
+- Framer Motion (opcional)
+
+---
+
+Implemente as mudanças descritas acima no projeto Previzi.
