@@ -1,0 +1,120 @@
+Crie um sistema completo de gestão financeira pessoal chamado **Previzi**, com foco em previsibilidade, tranquilidade e controle das finanças pessoais. O projeto deve ser feito em **React + Tailwind CSS** e utilizar o **Firebase** como backend para autenticação, banco de dados (Firestore) e hospedagem.
+
+---
+
+📁 Estrutura de diretórios:
+- src/
+  - components/
+  - pages/
+  - context/
+  - utils/
+  - styles/
+- firebase.js (client SDK)
+- firebase-admin.js (admin SDK com service account abaixo)
+- App.jsx ou main.jsx
+- .env (para chaves públicas)
+
+---
+
+🔐 Autenticação:
+- Login e cadastro com e-mail e senha usando Firebase Auth
+- Redirecionamento após login para /dashboard
+- Contexto de autenticação com proteção de rotas privadas
+- Logout funcional
+- Botões de redefinição de senha
+
+---
+
+💳 Transações:
+- Página para adicionar transação com:
+  - Tipo: Receita ou Despesa
+  - Valor
+  - Categoria
+  - Origem
+  - Data
+  - Status (Pago / Em aberto)
+  - Recorrente (sim/não)
+  - Descrição
+- Salvar dados no Firestore em `/users/{uid}/transactions/{docId}`
+
+---
+
+📊 Dashboard:
+- Exibir:
+  - Total de receitas e despesas
+  - Saldo atual
+  - Gráfico de pizza com distribuição por categoria
+  - Gráfico de linha com saldo dos últimos 6 meses
+  - Lista dos próximos vencimentos
+- Dados vindos de Firestore
+
+---
+
+🔮 Previsibilidade:
+- Página “Previsibilidade” com:
+  - Receita prevista
+  - Despesa prevista
+  - Saldo futuro mês a mês
+  - Destacar saldo negativo em vermelho e positivo em verde
+  - Permitir simulações e visualização por mês
+  - Salvar dados em `/users/{uid}/projections/{yyyy-mm}`
+
+---
+
+⚙️ Configurações:
+- Página “Configurações” para:
+  - Nome, email (visualização)
+  - Horário de lembrete
+  - Preferências
+  - Plano atual (simulado)
+  - Salvar configurações em `/users/{uid}/settings`
+
+---
+
+🗂️ Categorias e Fontes:
+- Página para criar, editar e deletar categorias e fontes
+- Separar categorias de receita e despesa
+- Salvar dados em `/users/{uid}/categories`
+
+---
+
+📅 Calendário:
+- Página de calendário mensal com:
+  - Transações por dia
+  - Cores distintas para receita, despesa e vencidas
+  - Botão para criar transação pelo dia clicado
+
+---
+
+🔒 Firestore Security Rules:
+- Assegure que todas as leituras/escritas estejam protegidas por:
+  `request.auth.uid == userId`
+- Nenhum dado deve ser acessível sem autenticação
+
+---
+
+✅ Extras:
+- Responsivo (mobile e desktop)
+- Mensagens de erro, loading states
+- Visual clean com tons azul, verde e branco
+- Deploy no Firebase Hosting
+
+---
+
+🔐 Firebase Admin SDK (arquivo `firebase-admin-sdk.json`):
+Utilize as seguintes credenciais (ambiente de teste):
+
+```json
+{
+  "type": "service_account",
+  "project_id": "previzi-54773",
+  "private_key_id": "b737bcabdc9730f6a0aeda930963f94e34b3e270",
+  "private_key": "-----BEGIN PRIVATE KEY-----\\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDkIT/ll4u/g/6h\\nzSuvhZXBQLiE6KbNX5DLaghfaykItRQtiqUsbo18//6QAy3EO5xWd7KUq0J/ycYf\\n...rest of key...\\n-----END PRIVATE KEY-----\\n",
+  "client_email": "firebase-adminsdk-fbsvc@previzi-54773.iam.gserviceaccount.com",
+  "client_id": "117674383714801061042",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40previzi-54773.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
