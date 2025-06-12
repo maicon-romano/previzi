@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTransactions } from "../hooks/useTransactions";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useAuth } from "../contexts/AuthContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,25 +21,38 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { motion } from "framer-motion";
+import { updateTransaction, deleteTransaction } from "../utils/firebase";
+import { useToast } from "@/hooks/use-toast";
+import Swal from "sweetalert2";
 
 export default function Transactions() {
-  const { transactions, isLoading, error } = useTransactions();
+  const { transactions, isLoading, error, refetchTransactions } = useTransactions();
+  const { currentUser } = useAuth();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("current");
 
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="p-6">
+        <CardHeader>
+          <Skeleton className="h-6 w-48" />
+        </CardHeader>
+        <CardContent>
           <div className="space-y-4">
-            <div className="flex gap-4">
-              <Skeleton className="h-10 w-40" />
-              <Skeleton className="h-10 w-40" />
-              <Skeleton className="h-10 flex-1" />
-            </div>
             {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
+              <div key={i} className="flex items-center space-x-4">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-[250px]" />
+                  <Skeleton className="h-4 w-[200px]" />
+                </div>
+              </div>
             ))}
           </div>
         </CardContent>
@@ -49,56 +63,146 @@ export default function Transactions() {
   if (error) {
     return (
       <Card>
-        <CardContent className="p-6">
-          <div className="text-center py-8">
+        <CardContent className="flex items-center justify-center py-8">
+          <div className="text-center">
             <i className="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Erro ao carregar transações</h3>
-            <p className="text-gray-600">Não foi possível carregar as transações. Tente novamente.</p>
+            <p className="text-red-600">Erro ao carregar transações: {error.message}</p>
           </div>
         </CardContent>
       </Card>
     );
   }
 
-  // Filter transactions
+  // Enhanced filtering logic
   const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.category.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === "all" || transaction.type === typeFilter;
     const matchesCategory = categoryFilter === "all" || transaction.category === categoryFilter;
+    const matchesStatus = statusFilter === "all" || transaction.status === statusFilter;
     
-    return matchesSearch && matchesType && matchesCategory;
+    // Enhanced date filtering
+    const transactionDate = new Date(transaction.date);
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+    
+    let matchesDate = true;
+    if (dateFilter === "current") {
+      matchesDate = transactionDate.getMonth() === currentMonth && 
+                   transactionDate.getFullYear() === currentYear;
+    } else if (dateFilter === "previous") {
+      const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+      const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+      matchesDate = transactionDate.getMonth() === prevMonth && 
+                   transactionDate.getFullYear() === prevYear;
+    } else if (dateFilter === "future") {
+      matchesDate = transactionDate > currentDate;
+    }
+    
+    return matchesSearch && matchesType && matchesCategory && matchesStatus && matchesDate;
   });
+
+  // Status toggle function
+  const handleStatusToggle = async (transactionId: string, currentStatus: string) => {
+    if (!currentUser) return;
+    
+    const newStatus = currentStatus === "paid" ? "pending" : "paid";
+    
+    try {
+      await updateTransaction(currentUser.uid, transactionId, { status: newStatus });
+      await refetchTransactions();
+      
+      toast({
+        title: "Status atualizado",
+        description: `Transação marcada como ${newStatus === "paid" ? "paga" : "pendente"}.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o status da transação.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Delete function with SweetAlert2
+  const handleDelete = async (transactionId: string, description: string) => {
+    if (!currentUser) return;
+
+    const result = await Swal.fire({
+      title: "Excluir transação?",
+      text: `Tem certeza que deseja excluir "${description}"?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#EF4444",
+      cancelButtonColor: "#6B7280",
+      confirmButtonText: "Sim, excluir",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await deleteTransaction(currentUser.uid, transactionId);
+        await refetchTransactions();
+        
+        Swal.fire({
+          title: "Excluída!",
+          text: "Transação foi removida com sucesso.",
+          icon: "success",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      } catch (error) {
+        Swal.fire({
+          title: "Erro!",
+          text: "Não foi possível excluir a transação.",
+          icon: "error",
+        });
+      }
+    }
+  };
 
   // Get unique categories for filter
   const categories = Array.from(new Set(transactions.map(t => t.category)));
 
-  const getTransactionIcon = (type: string, category: string) => {
-    if (type === "income") {
-      return "fas fa-arrow-up";
-    }
-    
-    // Expense icons based on category
-    const categoryIcons: Record<string, string> = {
-      "Moradia": "fas fa-home",
+  // Category icon mapping
+  const getCategoryIcon = (category: string) => {
+    const categoryIcons: { [key: string]: string } = {
       "Alimentação": "fas fa-utensils",
       "Transporte": "fas fa-car",
+      "Moradia": "fas fa-home",
       "Lazer": "fas fa-gamepad",
-      "Saúde": "fas fa-heartbeat",
+      "Saúde": "fas fa-heart",
       "Educação": "fas fa-graduation-cap",
+      "Compras": "fas fa-shopping-bag",
+      "Outros": "fas fa-ellipsis-h",
+      "Salário": "fas fa-briefcase",
+      "Freelance": "fas fa-laptop",
+      "Investimentos": "fas fa-chart-line",
+      "Renda Extra": "fas fa-plus-circle",
     };
     
-    return categoryIcons[category] || "fas fa-arrow-down";
+    return categoryIcons[category] || "fas fa-circle";
   };
 
   return (
-    <Card>
-      {/* Header with filters */}
-      <CardHeader className="border-b border-gray-200">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-center space-x-4">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Card>
+        {/* Enhanced Header with filters */}
+        <CardHeader className="border-b border-gray-200 bg-gray-50/50">
+          <CardTitle className="flex items-center gap-2 mb-4">
+            <i className="fas fa-exchange-alt text-blue-600"></i>
+            Gerenciar Transações
+          </CardTitle>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger>
                 <SelectValue placeholder="Tipo" />
               </SelectTrigger>
               <SelectContent>
@@ -109,7 +213,7 @@ export default function Transactions() {
             </Select>
             
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger>
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>
               <SelectContent>
@@ -121,123 +225,191 @@ export default function Transactions() {
                 ))}
               </SelectContent>
             </Select>
+
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="paid">Pagos</SelectItem>
+                <SelectItem value="pending">Pendentes</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={dateFilter} onValueChange={setDateFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="current">Mês atual</SelectItem>
+                <SelectItem value="previous">Mês anterior</SelectItem>
+                <SelectItem value="future">Futuro</SelectItem>
+                <SelectItem value="all">Todos os períodos</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <div className="col-span-2">
+              <Input
+                placeholder="Buscar transações..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full"
+              />
+            </div>
           </div>
-          
-          <div className="flex items-center space-x-2">
-            <Input
-              placeholder="Buscar transações..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-64"
-            />
-            <Button variant="outline" size="icon">
-              <i className="fas fa-search"></i>
+
+          <div className="flex items-center justify-between mt-4">
+            <div className="text-sm text-gray-600">
+              Mostrando {filteredTransactions.length} de {transactions.length} transações
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                setSearchTerm("");
+                setTypeFilter("all");
+                setCategoryFilter("all");
+                setStatusFilter("all");
+                setDateFilter("current");
+              }}
+            >
+              <i className="fas fa-times mr-2"></i>
+              Limpar filtros
             </Button>
           </div>
-        </div>
-      </CardHeader>
+        </CardHeader>
 
-      {/* Transactions Table */}
-      <CardContent className="p-0">
-        {filteredTransactions.length === 0 ? (
-          <div className="text-center py-12">
-            <i className="fas fa-search text-4xl text-gray-400 mb-4"></i>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {searchTerm || typeFilter !== "all" || categoryFilter !== "all" 
-                ? "Nenhuma transação encontrada" 
-                : "Nenhuma transação cadastrada"}
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {searchTerm || typeFilter !== "all" || categoryFilter !== "all"
-                ? "Tente ajustar os filtros de busca."
-                : "Comece adicionando sua primeira transação."}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTransactions.map((transaction) => (
-                  <TableRow key={transaction.id}>
-                    <TableCell>
-                      <div className="flex items-center">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
-                          transaction.type === 'income' ? 'bg-success-100' : 'bg-red-100'
-                        }`}>
-                          <i className={`${getTransactionIcon(transaction.type, transaction.category)} text-sm ${
-                            transaction.type === 'income' ? 'text-success-600' : 'text-danger-600'
-                          }`}></i>
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {transaction.description}
+        {/* Enhanced Transactions Table */}
+        <CardContent className="p-0">
+          {filteredTransactions.length === 0 ? (
+            <div className="text-center py-16">
+              <i className="fas fa-search text-5xl text-gray-300 mb-4"></i>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma transação encontrada</h3>
+              <p className="text-gray-500">Tente ajustar os filtros ou adicionar novas transações.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50/50">
+                    <TableHead className="font-semibold">Tipo</TableHead>
+                    <TableHead className="font-semibold">Descrição</TableHead>
+                    <TableHead className="font-semibold">Categoria</TableHead>
+                    <TableHead className="font-semibold">Valor</TableHead>
+                    <TableHead className="font-semibold">Data</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="text-right font-semibold">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredTransactions.map((transaction, index) => (
+                    <TableRow
+                      key={transaction.id}
+                      className="hover:bg-gray-50/50 transition-colors"
+                    >
+                      <TableCell>
+                        <div className="flex items-center">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center mr-3 ${
+                            transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
+                          }`}>
+                            <i className={`${getCategoryIcon(transaction.category)} text-sm ${
+                              transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                            }`}></i>
                           </div>
+                          <span className="font-medium capitalize">
+                            {transaction.type === 'income' ? 'Receita' : 'Despesa'}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-gray-900">{transaction.description}</p>
                           {transaction.source && (
-                            <div className="text-sm text-gray-500">
-                              {transaction.source}
+                            <p className="text-sm text-gray-500">{transaction.source}</p>
+                          )}
+                          {transaction.recurring && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <i className="fas fa-repeat text-xs text-blue-600"></i>
+                              <span className="text-xs text-blue-600">Recorrente</span>
                             </div>
                           )}
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={transaction.type === 'income' ? 'default' : 'secondary'}>
-                        {transaction.category}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-gray-900">
-                      {new Date(transaction.date).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell>
-                      <span className={`text-sm font-semibold ${
-                        transaction.type === 'income' ? 'text-success-500' : 'text-danger-500'
-                      }`}>
-                        {transaction.type === 'income' ? '+' : '-'}R$ {transaction.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={transaction.status === 'paid' ? 'default' : 'outline'}>
-                        {transaction.status === 'paid' ? 'Pago' : 'Pendente'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <i className="fas fa-edit mr-1"></i>
-                          Editar
-                        </Button>
-                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                          <i className="fas fa-trash mr-1"></i>
-                          Excluir
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-
-        {/* Pagination */}
-        {filteredTransactions.length > 0 && (
-          <div className="px-6 py-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-500">
-                Mostrando {filteredTransactions.length} de {transactions.length} transações
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="font-medium">
+                          {transaction.category}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`font-bold text-lg ${
+                          transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {transaction.type === 'income' ? '+' : '-'}R$ {transaction.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="font-medium text-gray-900">
+                            {new Date(transaction.date).toLocaleDateString('pt-BR')}
+                          </div>
+                          <div className="text-gray-500">
+                            {new Date(transaction.date).toLocaleDateString('pt-BR', { weekday: 'short' })}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={transaction.status === 'paid'}
+                            onCheckedChange={() => handleStatusToggle(transaction.id, transaction.status)}
+                            disabled={false}
+                          />
+                          <Badge 
+                            variant={transaction.status === 'paid' ? 'default' : 'secondary'}
+                            className={transaction.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}
+                          >
+                            {transaction.status === 'paid' ? 'Pago' : 'Pendente'}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end space-x-2">
+                          <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                            <i className="fas fa-edit"></i>
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => handleDelete(transaction.id, transaction.description)}
+                          >
+                            <i className="fas fa-trash"></i>
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+          
+          {/* Enhanced Pagination */}
+          {filteredTransactions.length > 0 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t bg-gray-50/30">
+              <div className="flex items-center gap-4 text-sm text-gray-600">
+                <span>Mostrando {filteredTransactions.length} de {transactions.length} transações</span>
+                <div className="flex items-center gap-2">
+                  <span>Total:</span>
+                  <span className="font-bold text-blue-600">
+                    R$ {filteredTransactions.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
               </div>
               <div className="flex items-center space-x-2">
                 <Button variant="outline" size="sm" disabled>
+                  <i className="fas fa-chevron-left mr-1"></i>
                   Anterior
                 </Button>
                 <Button variant="default" size="sm">
@@ -245,12 +417,13 @@ export default function Transactions() {
                 </Button>
                 <Button variant="outline" size="sm" disabled>
                   Próximo
+                  <i className="fas fa-chevron-right ml-1"></i>
                 </Button>
               </div>
             </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }

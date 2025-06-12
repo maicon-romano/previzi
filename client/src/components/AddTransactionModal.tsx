@@ -48,6 +48,7 @@ const transactionSchema = z.object({
   date: z.string().min(1, "Data é obrigatória"),
   status: z.enum(["paid", "pending"]),
   recurring: z.boolean(),
+  recurringType: z.enum(["fixed", "variable"]).optional(),
 });
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
@@ -73,10 +74,12 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
       date: new Date().toISOString().split("T")[0],
       status: "paid",
       recurring: false,
+      recurringType: "fixed",
     },
   });
 
   const watchType = form.watch("type");
+  const watchRecurring = form.watch("recurring");
 
   const onSubmit = async (data: TransactionFormData) => {
     if (!currentUser) return;
@@ -272,6 +275,30 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                 </FormItem>
               )}
             />
+
+            {watchRecurring && (
+              <FormField
+                control={form.control}
+                name="recurringType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de recorrência</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="fixed">Valor fixo</SelectItem>
+                        <SelectItem value="variable">Valor variável</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className="flex justify-end space-x-3 pt-4">
               <Button type="button" variant="outline" onClick={onClose}>
