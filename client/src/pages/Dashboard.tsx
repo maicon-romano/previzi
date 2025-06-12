@@ -156,20 +156,20 @@ export default function Dashboard() {
           transition={{ duration: 0.5 }}
         >
           <Card className="border-l-4 border-l-blue-500">
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Saldo Atual</p>
-                  <p className={`text-3xl font-bold ${currentBalance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                  <p className="text-xs font-medium text-gray-600">Saldo Atual</p>
+                  <p className={`text-xl font-bold ${currentBalance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                     R$ {currentBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
                 </div>
-                <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center">
-                  <i className="fas fa-wallet text-blue-600 text-xl"></i>
+                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <i className="fas fa-wallet text-blue-600 text-sm"></i>
                 </div>
               </div>
-              <div className="mt-4 flex items-center">
-                <span className={`text-sm font-semibold px-2 py-1 rounded-full ${
+              <div className="mt-2 flex items-center">
+                <span className={`text-xs font-medium px-2 py-1 rounded-full ${
                   currentBalance >= 0 
                     ? 'bg-green-100 text-green-700' 
                     : 'bg-red-100 text-red-700'
@@ -187,20 +187,20 @@ export default function Dashboard() {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <Card className="border-l-4 border-l-green-500">
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Receitas do Mês</p>
-                  <p className="text-3xl font-bold text-green-600">
+                  <p className="text-xs font-medium text-gray-600">Receitas do Mês</p>
+                  <p className="text-xl font-bold text-green-600">
                     R$ {totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
                 </div>
-                <div className="w-14 h-14 bg-green-50 rounded-xl flex items-center justify-center">
-                  <i className="fas fa-arrow-up text-green-600 text-xl"></i>
+                <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                  <i className="fas fa-arrow-up text-green-600 text-sm"></i>
                 </div>
               </div>
-              <div className="mt-4 flex items-center">
-                <span className="text-sm text-gray-500">
+              <div className="mt-2 flex items-center">
+                <span className="text-xs text-gray-500">
                   {currentMonthTransactions.filter(t => t.type === 'income').length} transações
                 </span>
               </div>
@@ -214,20 +214,20 @@ export default function Dashboard() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <Card className="border-l-4 border-l-red-500">
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Despesas do Mês</p>
-                  <p className="text-3xl font-bold text-red-600">
+                  <p className="text-xs font-medium text-gray-600">Despesas do Mês</p>
+                  <p className="text-xl font-bold text-red-600">
                     R$ {totalExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
                 </div>
-                <div className="w-14 h-14 bg-red-50 rounded-xl flex items-center justify-center">
-                  <i className="fas fa-arrow-down text-red-600 text-xl"></i>
+                <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
+                  <i className="fas fa-arrow-down text-red-600 text-sm"></i>
                 </div>
               </div>
-              <div className="mt-4 flex items-center">
-                <span className="text-sm text-gray-500">
+              <div className="mt-2 flex items-center">
+                <span className="text-xs text-gray-500">
                   {currentMonthTransactions.filter(t => t.type === 'expense').length} transações
                 </span>
               </div>
@@ -245,9 +245,9 @@ export default function Dashboard() {
           transition={{ duration: 0.5, delay: 0.3 }}
         >
           <Card className="h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <i className="fas fa-chart-pie text-blue-600"></i>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <i className="fas fa-chart-pie text-blue-600 text-sm"></i>
                 Distribuição por Categoria
               </CardTitle>
             </CardHeader>
@@ -314,8 +314,8 @@ export default function Dashboard() {
           <Card className="h-full">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <i className="fas fa-chart-line text-green-600"></i>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <i className="fas fa-chart-line text-green-600 text-sm"></i>
                   Evolução das Receitas
                 </CardTitle>
                 <Select value={chartPeriod} onValueChange={setChartPeriod}>
@@ -404,8 +404,8 @@ export default function Dashboard() {
           <Card className="h-full">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <i className="fas fa-receipt text-purple-600"></i>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <i className="fas fa-receipt text-purple-600 text-sm"></i>
                   Transações Recentes
                 </CardTitle>
                 <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
