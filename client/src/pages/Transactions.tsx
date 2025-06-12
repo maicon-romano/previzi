@@ -195,8 +195,8 @@ export default function Transactions() {
       <Card>
         {/* Enhanced Header with filters */}
         <CardHeader className="border-b border-gray-200 bg-gray-50/50">
-          <CardTitle className="flex items-center gap-2 mb-4">
-            <i className="fas fa-exchange-alt text-blue-600"></i>
+          <CardTitle className="flex items-center gap-2 mb-3 text-lg">
+            <i className="fas fa-exchange-alt text-blue-600 text-sm"></i>
             Gerenciar Transações
           </CardTitle>
           
@@ -342,7 +342,7 @@ export default function Transactions() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <span className={`font-bold text-lg ${
+                        <span className={`font-semibold text-sm ${
                           transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                         }`}>
                           {transaction.type === 'income' ? '+' : '-'}R$ {transaction.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}

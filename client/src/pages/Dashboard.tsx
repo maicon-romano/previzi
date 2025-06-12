@@ -254,7 +254,7 @@ export default function Dashboard() {
             <CardContent>
               {pieChartData.length > 0 ? (
                 <div className="space-y-4">
-                  <div className="h-64">
+                  <div className="chart-container">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -333,7 +333,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               {evolutionData.length > 0 ? (
-                <div className="h-64">
+                <div className="chart-container">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={evolutionData}>
                       <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
@@ -473,8 +473,8 @@ export default function Dashboard() {
         >
           <Card className="h-full">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <i className="fas fa-clock text-orange-600"></i>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <i className="fas fa-clock text-orange-600 text-sm"></i>
                 Próximos Vencimentos
               </CardTitle>
             </CardHeader>

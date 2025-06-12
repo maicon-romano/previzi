@@ -124,7 +124,7 @@ export default function Categories() {
       <Card>
         <CardHeader className="border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <CardTitle>Categorias de Receita</CardTitle>
+            <CardTitle className="text-lg">Categorias de Receita</CardTitle>
             <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
               <DialogTrigger asChild>
                 <Button
@@ -231,7 +231,7 @@ export default function Categories() {
       <Card>
         <CardHeader className="border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <CardTitle>Categorias de Despesa</CardTitle>
+            <CardTitle className="text-lg">Categorias de Despesa</CardTitle>
             <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
               <DialogTrigger asChild>
                 <Button

@@ -4,6 +4,50 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom spacing adjustments for better visual density */
+.compact-card {
+  @apply p-3;
+}
+
+.compact-header {
+  @apply pb-2 mb-2;
+}
+
+.compact-title {
+  @apply text-base font-semibold;
+}
+
+.compact-icon {
+  @apply text-sm w-8 h-8;
+}
+
+.compact-text {
+  @apply text-sm;
+}
+
+.compact-value {
+  @apply text-lg font-bold;
+}
+
+/* Table improvements */
+.compact-table th {
+  @apply py-2 px-3 text-xs font-medium;
+}
+
+.compact-table td {
+  @apply py-2 px-3 text-sm;
+}
+
+/* Improved spacing for forms */
+.form-compact .space-y-4 > * + * {
+  margin-top: 0.75rem;
+}
+
+/* Chart container optimization */
+.chart-container {
+  height: 200px;
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);
