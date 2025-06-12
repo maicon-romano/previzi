@@ -1,0 +1,113 @@
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  Timestamp,
+} from "firebase/firestore";
+import { db } from "../firebase";
+import { TransactionType, CategoryType } from "../types";
+
+// Transaction utilities
+export const addTransaction = async (userId: string, transaction: Omit<TransactionType, "id" | "userId" | "createdAt">) => {
+  const transactionData = {
+    ...transaction,
+    userId,
+    createdAt: Timestamp.fromDate(new Date()),
+    date: Timestamp.fromDate(transaction.date),
+  };
+
+  const docRef = await addDoc(collection(db, "users", userId, "transactions"), transactionData);
+  return docRef.id;
+};
+
+export const getTransactions = async (userId: string): Promise<TransactionType[]> => {
+  const q = query(
+    collection(db, "users", userId, "transactions"),
+    orderBy("date", "desc")
+  );
+  
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    date: doc.data().date.toDate(),
+    createdAt: doc.data().createdAt.toDate(),
+  })) as TransactionType[];
+};
+
+export const updateTransaction = async (userId: string, transactionId: string, updates: Partial<TransactionType>) => {
+  const transactionRef = doc(db, "users", userId, "transactions", transactionId);
+  
+  const updateData = { ...updates };
+  if (updates.date) {
+    updateData.date = Timestamp.fromDate(updates.date);
+  }
+  
+  await updateDoc(transactionRef, updateData);
+};
+
+export const deleteTransaction = async (userId: string, transactionId: string) => {
+  const transactionRef = doc(db, "users", userId, "transactions", transactionId);
+  await deleteDoc(transactionRef);
+};
+
+// Category utilities
+export const addCategory = async (userId: string, category: Omit<CategoryType, "id" | "userId" | "createdAt">) => {
+  const categoryData = {
+    ...category,
+    userId,
+    createdAt: Timestamp.fromDate(new Date()),
+  };
+
+  const docRef = await addDoc(collection(db, "users", userId, "categories"), categoryData);
+  return docRef.id;
+};
+
+export const getCategories = async (userId: string): Promise<CategoryType[]> => {
+  const q = query(
+    collection(db, "users", userId, "categories"),
+    orderBy("name", "asc")
+  );
+  
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    createdAt: doc.data().createdAt.toDate(),
+  })) as CategoryType[];
+};
+
+export const deleteCategory = async (userId: string, categoryId: string) => {
+  const categoryRef = doc(db, "users", userId, "categories", categoryId);
+  await deleteDoc(categoryRef);
+};
+
+// Default categories for new users
+export const createDefaultCategories = async (userId: string) => {
+  const defaultCategories = [
+    // Income categories
+    { name: "Salário", type: "income" as const, icon: "fas fa-briefcase" },
+    { name: "Freelance", type: "income" as const, icon: "fas fa-handshake" },
+    { name: "Investimentos", type: "income" as const, icon: "fas fa-chart-line" },
+    { name: "Outros", type: "income" as const, icon: "fas fa-plus" },
+    
+    // Expense categories
+    { name: "Moradia", type: "expense" as const, icon: "fas fa-home" },
+    { name: "Alimentação", type: "expense" as const, icon: "fas fa-utensils" },
+    { name: "Transporte", type: "expense" as const, icon: "fas fa-car" },
+    { name: "Lazer", type: "expense" as const, icon: "fas fa-gamepad" },
+    { name: "Saúde", type: "expense" as const, icon: "fas fa-heartbeat" },
+    { name: "Educação", type: "expense" as const, icon: "fas fa-graduation-cap" },
+    { name: "Outros", type: "expense" as const, icon: "fas fa-minus" },
+  ];
+
+  for (const category of defaultCategories) {
+    await addCategory(userId, category);
+  }
+};
