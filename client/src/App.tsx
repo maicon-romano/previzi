@@ -8,6 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
+import TransactionsMonthly from "./pages/TransactionsMonthly";
 import MonthlyView from "./pages/MonthlyView";
 import Predictability from "./pages/Predictability";
 import Calendar from "./pages/Calendar";
@@ -26,7 +27,7 @@ function Router() {
       </Route>
       <Route path="/transactions">
         <ProtectedRoute>
-          <Transactions />
+          <TransactionsMonthly />
         </ProtectedRoute>
       </Route>
       <Route path="/monthly">

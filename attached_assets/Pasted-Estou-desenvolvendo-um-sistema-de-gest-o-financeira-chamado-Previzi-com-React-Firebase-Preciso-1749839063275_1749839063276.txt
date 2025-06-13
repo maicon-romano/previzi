@@ -1,0 +1,69 @@
+Estou desenvolvendo um sistema de gestão financeira chamado Previzi com React + Firebase.
+
+Preciso que você corrija um problema e faça ajustes na tela de transações.
+
+---
+
+🧨 PROBLEMA 1: Erro ao consultar transações por mês
+Recebo o seguinte erro do Firestore:
+
+"The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/previzi-54773/firestore/indexes/..."
+
+✅ O que fazer:
+- Detectar qual é a consulta que está exigindo índice (ex: combinando filtros como `monthRef`, `date`, `status`)
+- Criar corretamente o índice composto no Firestore
+- Se possível, orientar a forma correta de estruturar o `where()` com `.orderBy()` sem gerar conflito
+
+---
+
+🛠️ AJUSTE 2: Exibir transações por mês na tela de transações
+
+🎯 Objetivo:
+Ter na tela de transações a **mesma visão mensal** da tela de previsibilidade, onde eu possa ver:
+
+- Todas as transações daquele mês (receitas, despesas, recorrentes ou não)
+- O **status** de cada transação (pago ou em aberto)
+- A possibilidade de **alternar o status** de forma rápida
+- O controle histórico mês a mês
+
+✅ Funcionalidade esperada:
+1. Adicionar no topo da tela de transações um **dropdown ou botão de navegação por mês** (junho, julho, agosto…)
+2. Ao selecionar um mês:
+   - Carregar todas as transações que tenham `monthRef = "YYYY-MM"` ou que ocorram naquele mês
+   - Incluir transações recorrentes fixas ou variáveis previstas para o mês
+3. Exibir na tabela:
+   - Tipo (receita/despesa)
+   - Valor
+   - Categoria
+   - Data
+   - Status com **cor verde se pago** ou **vermelha se em aberto**
+   - Botão para alternar status diretamente
+4. A alteração do status deve:
+   - Atualizar o campo `status` no Firestore
+   - Atualizar visualmente na tela sem precisar recarregar
+5. A consulta deve:
+   - Ser otimizada com `where('monthRef', '==', selectedMonth')`
+   - Ser atualizada em tempo real com `onSnapshot` (ou React Query com revalidate)
+
+✅ Exemplo de estrutura no Firestore:
+```json
+{
+  "type": "receita",
+  "valor": 1200,
+  "categoria": "Salário",
+  "status": "em aberto",
+  "data": "2025-07-01",
+  "recorrente": true,
+  "valor_variavel": false,
+  "monthRef": "2025-07"
+}
+
+📦 Resultado Esperado:
+
+A tela de transações deve permitir visualização e controle completo mês a mês
+
+Mostrar histórico, status e recorrentes mesmo com valor variável
+
+Eliminar o erro de índice com a estrutura e índice corretos
+
+Implemente tudo de forma moderna, responsiva, usando Tailwind e com atualizações em tempo real.

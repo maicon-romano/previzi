@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useTransactions } from "../hooks/useTransactions";
+import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import type { TransactionType } from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,21 +22,98 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import { ChevronLeft, ChevronRight, Calendar, Filter } from "lucide-react";
 import { motion } from "framer-motion";
-import { updateTransaction, deleteTransaction } from "../utils/firebase";
+import { getTransactionsByMonth, updateTransaction, deleteTransaction } from "../utils/firebase";
 import { useToast } from "@/hooks/use-toast";
 import Swal from "sweetalert2";
 
 export default function Transactions() {
-  const { transactions, isLoading, error, refetchTransactions } = useTransactions();
   const { currentUser } = useAuth();
   const { toast } = useToast();
+  const [transactions, setTransactions] = useState<TransactionType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [dateFilter, setDateFilter] = useState("current");
-  const [viewMode, setViewMode] = useState<"current" | "future">("current");
+
+  const monthNames = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
+
+  const getMonthName = (monthRef: string) => {
+    const [year, month] = monthRef.split('-');
+    return `${monthNames[parseInt(month) - 1]} ${year}`;
+  };
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const date = new Date(year, month - 1);
+    
+    if (direction === 'prev') {
+      date.setMonth(date.getMonth() - 1);
+    } else {
+      date.setMonth(date.getMonth() + 1);
+    }
+    
+    const newMonthRef = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    setSelectedMonth(newMonthRef);
+  };
+
+  const loadTransactions = async () => {
+    if (!currentUser) return;
+    
+    setIsLoading(true);
+    try {
+      const monthTransactions = await getTransactionsByMonth(currentUser.uid, selectedMonth);
+      setTransactions(monthTransactions);
+    } catch (error) {
+      console.error('Erro ao carregar transações:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as transações do mês.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleStatusToggle = async (transactionId: string, currentStatus: string) => {
+    if (!currentUser) return;
+
+    try {
+      const newStatus = currentStatus === 'paid' ? 'pending' : 'paid';
+      await updateTransaction(currentUser.uid, transactionId, { status: newStatus });
+      
+      setTransactions(prev => 
+        prev.map(t => 
+          t.id === transactionId ? { ...t, status: newStatus } : t
+        )
+      );
+
+      toast({
+        title: "Status atualizado",
+        description: `Transação marcada como ${newStatus === 'paid' ? 'paga' : 'pendente'}.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o status da transação.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    loadTransactions();
+  }, [selectedMonth, currentUser]);
 
   if (isLoading) {
     return (

@@ -97,16 +97,15 @@ export const getTransactions = async (userId: string): Promise<TransactionType[]
   }) as TransactionType[];
 };
 
-// Nova função para buscar transações por mês
+// Nova função para buscar transações por mês (sem orderBy para evitar erro de índice)
 export const getTransactionsByMonth = async (userId: string, monthRef: string): Promise<TransactionType[]> => {
   const q = query(
     collection(db, "users", userId, "transactions"),
-    where("monthRef", "==", monthRef),
-    orderBy("date", "desc")
+    where("monthRef", "==", monthRef)
   );
   
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => {
+  const transactions = querySnapshot.docs.map(doc => {
     const data = doc.data();
     return {
       id: doc.id,
@@ -116,6 +115,9 @@ export const getTransactionsByMonth = async (userId: string, monthRef: string): 
       originalDate: data.originalDate ? data.originalDate.toDate() : undefined,
     };
   }) as TransactionType[];
+  
+  // Ordenar no cliente para evitar erro de índice
+  return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 
 export const updateTransaction = async (userId: string, transactionId: string, updates: Partial<TransactionType>) => {
