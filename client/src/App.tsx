@@ -8,6 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
+import MonthlyView from "./pages/MonthlyView";
 import Predictability from "./pages/Predictability";
 import Calendar from "./pages/Calendar";
 import Categories from "./pages/Categories";

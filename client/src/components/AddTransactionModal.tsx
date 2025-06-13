@@ -2,9 +2,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { addDoc, collection } from "firebase/firestore";
-import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
+import { addTransaction } from "../utils/firebase";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
