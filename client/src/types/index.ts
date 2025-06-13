@@ -1,7 +1,7 @@
 export interface TransactionType {
   id: string;
   type: "income" | "expense";
-  amount: number;
+  amount: number | null; // null para transações variáveis sem valor definido
   category: string;
   description: string;
   source?: string;
@@ -11,9 +11,11 @@ export interface TransactionType {
   recurringType?: "fixed" | "variable";
   userId: string;
   createdAt: Date;
-  isFuture?: boolean;
-  originalId?: string;
-  monthOffset?: number;
+  // Campos específicos para recorrência
+  originalDate?: Date; // data original da primeira transação
+  monthRef: string; // formato YYYY-MM para filtros por mês
+  isGenerated?: boolean; // true se foi gerada automaticamente
+  originalId?: string; // ID da transação original que gerou esta
 }
 
 export interface CategoryType {

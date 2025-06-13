@@ -86,15 +86,19 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
 
     setIsLoading(true);
     try {
+      const transactionDate = new Date(data.date);
+      const monthRef = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
+      
       const transactionData: Omit<TransactionType, "id"> = {
         ...data,
         amount: parseFloat(data.amount),
-        date: new Date(data.date),
+        date: transactionDate,
+        monthRef,
         userId: currentUser.uid,
         createdAt: new Date(),
       };
 
-      await addDoc(collection(db, "users", currentUser.uid, "transactions"), transactionData);
+      await addTransaction(currentUser.uid, transactionData);
 
       toast({
         title: "Transação adicionada",

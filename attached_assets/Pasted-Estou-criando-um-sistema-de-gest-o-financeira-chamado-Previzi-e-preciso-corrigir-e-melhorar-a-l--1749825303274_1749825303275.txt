@@ -1,0 +1,71 @@
+Estou criando um sistema de gestão financeira chamado **Previzi** e preciso corrigir e melhorar a lógica de transações recorrentes. A seguir estão os comportamentos esperados que precisam ser implementados:
+
+---
+
+📅 FUNCIONALIDADE PRINCIPAL:
+Desejo visualizar as **transações de cada mês** separadamente: junho, julho, agosto, setembro, etc. Isso inclui:
+- Transações normais (lançadas diretamente)
+- Transações recorrentes (fixas ou variáveis)
+
+---
+
+🔁 LÓGICA ESPERADA PARA **TRANSAÇÕES RECORRENTES**:
+
+1. Ao marcar uma transação como **recorrente**, ela deve:
+   - Ser repetida automaticamente nos meses futuros
+   - Manter a mesma estrutura: tipo, categoria, descrição, origem, recorrência
+
+2. Se a transação for:
+   - `recorrente: true`
+   - `valor_variavel: false`
+   - ✅ Gerar automaticamente cópias nos meses futuros (próximos 12 meses, por exemplo), com **mesma data** e **mesmo valor**
+
+3. Se a transação for:
+   - `recorrente: true`
+   - `valor_variavel: true`
+   - ✅ Gerar a estrutura da transação nos meses futuros, **sem o valor preenchido**
+   - O usuário poderá editar manualmente o valor de cada mês (exemplo: conta de energia)
+
+4. Essa geração pode ocorrer via:
+   - Script local (ao abrir a página do mês, gerar se ainda não estiver salvo)
+   - Ou função de criação automática mensal (como cron ou lógica embutida no frontend/backend)
+
+---
+
+📊 VISUALIZAÇÃO:
+- Ao mudar de mês (junho → julho → agosto), quero ver **todas as transações previstas e lançadas** naquele mês:
+  - Receitas normais
+  - Despesas normais
+  - Recorrentes fixas
+  - Recorrentes variáveis (mesmo se sem valor ainda)
+
+---
+
+💾 FIRESTORE (ou estrutura equivalente):
+- Cada transação deve ter os seguintes campos:
+```json
+{
+  "type": "receita", // ou "despesa"
+  "valor": 4500, // ou null se valor variável
+  "descricao": "Salário",
+  "categoria": "Salário Fixo",
+  "status": "em aberto",
+  "data": "2025-07-01",
+  "recorrente": true,
+  "valor_variavel": false, // true se for variável
+  "data_original": "2025-06-01",
+  "mes_ref": "2025-07" // usado para facilitar busca por mês
+}
+
+✅ TAREFAS:
+
+1. Corrigir para que transações recorrentes sejam realmente geradas para os meses futuros
+
+2. Criar lógica para transações recorrentes com valor variável: aparecerem no mês, mesmo sem valor, e serem editáveis
+
+3. Permitir filtrar e visualizar as transações por mês (mês atual, anterior, futuro)
+
+4. Garantir que ao navegar por junho, julho, agosto, as transações estejam separadas por mes_ref
+
+Com base nesses requisitos, implemente ou corrija toda a lógica necessária no frontend e backend para que essa funcionalidade de previsibilidade mensal com recorrência funcione corretamente.
+
