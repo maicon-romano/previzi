@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "../contexts/AuthContext";
-import { addTransaction } from "../utils/firebase";
+import { addTransaction } from "../utils/firestore";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -44,11 +44,10 @@ const transactionSchema = z.object({
   amount: z.string().min(1, "Valor é obrigatório"),
   category: z.string().min(1, "Categoria é obrigatória"),
   description: z.string().min(1, "Descrição é obrigatória"),
-  source: z.string().optional(),
+  source: z.string().min(1, "Origem é obrigatória"),
   date: z.string().min(1, "Data é obrigatória"),
   status: z.enum(["paid", "pending"]),
   recurring: z.boolean(),
-  recurringType: z.enum(["fixed", "variable"]).optional(),
 });
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
@@ -74,7 +73,6 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
       date: new Date().toISOString().split("T")[0],
       status: "paid",
       recurring: false,
-      recurringType: "fixed",
     },
   });
 
@@ -97,20 +95,16 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
         throw new Error("Valor deve ser um número positivo");
       }
 
-      // Garantir que todos os campos estão com tipos corretos
+      // Garantir que todos os campos estão com tipos corretos conforme estrutura real do Firestore
       const transactionData = {
         type: data.type,
         amount: numValue,
         category: data.category,
         description: data.description,
-        source: data.source || undefined,
+        source: data.source,
         date: transactionDate,
         status: data.status,
         recurring: data.recurring,
-        recurringType: data.recurring ? data.recurringType : undefined,
-        monthRef,
-        originalDate: transactionDate, // Usar data como fallback para originalDate
-        isGenerated: false,
       };
 
       console.log('Dados da transação a serem salvos:', transactionData);

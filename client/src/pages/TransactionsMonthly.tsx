@@ -24,7 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { ChevronLeft, ChevronRight, Calendar, Filter, Search, Plus } from "lucide-react";
 import { motion } from "framer-motion";
-import { getTransactionsByMonth, updateTransaction, deleteTransaction } from "../utils/firebase";
+import { getTransactionsByMonth, updateTransaction, deleteTransaction, parseMonthString, subscribeToMonthlyTransactions } from "../utils/firestore";
 import { useToast } from "@/hooks/use-toast";
 import AddTransactionModal from "../components/AddTransactionModal";
 import Swal from "sweetalert2";
@@ -74,7 +74,8 @@ export default function TransactionsMonthly() {
     setIsLoading(true);
     try {
       console.log('Carregando transações para o mês:', selectedMonth, 'Usuário:', currentUser.uid);
-      const monthTransactions = await getTransactionsByMonth(currentUser.uid, selectedMonth);
+      const { year, month } = parseMonthString(selectedMonth);
+      const monthTransactions = await getTransactionsByMonth(currentUser.uid, year, month);
       console.log('Transações carregadas:', monthTransactions.length);
       setTransactions(monthTransactions);
     } catch (error) {
