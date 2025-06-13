@@ -71,7 +71,9 @@ export default function TransactionsMonthly() {
     
     setIsLoading(true);
     try {
+      console.log('Carregando transações para o mês:', selectedMonth, 'Usuário:', currentUser.uid);
       const monthTransactions = await getTransactionsByMonth(currentUser.uid, selectedMonth);
+      console.log('Transações carregadas:', monthTransactions.length);
       setTransactions(monthTransactions);
     } catch (error) {
       console.error('Erro ao carregar transações:', error);
@@ -145,7 +147,9 @@ export default function TransactionsMonthly() {
   };
 
   useEffect(() => {
-    loadTransactions();
+    if (currentUser) {
+      loadTransactions();
+    }
   }, [selectedMonth, currentUser]);
 
   const filteredTransactions = transactions.filter(transaction => {

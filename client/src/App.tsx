@@ -9,7 +9,6 @@ import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import TransactionsMonthly from "./pages/TransactionsMonthly";
-import MonthlyView from "./pages/MonthlyView";
 import Predictability from "./pages/Predictability";
 import Calendar from "./pages/Calendar";
 import Categories from "./pages/Categories";
@@ -30,11 +29,7 @@ function Router() {
           <TransactionsMonthly />
         </ProtectedRoute>
       </Route>
-      <Route path="/monthly">
-        <ProtectedRoute>
-          <MonthlyView />
-        </ProtectedRoute>
-      </Route>
+
       <Route path="/predictability">
         <ProtectedRoute>
           <Predictability />
