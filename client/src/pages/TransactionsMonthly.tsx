@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { ChevronLeft, ChevronRight, Calendar, Filter, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Filter, Search, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { getTransactionsByMonth, updateTransaction, deleteTransaction } from "../utils/firebase";
 import { useToast } from "@/hooks/use-toast";
@@ -42,6 +42,7 @@ export default function TransactionsMonthly() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const monthNames = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -207,6 +208,13 @@ export default function TransactionsMonthly() {
               Transações por Mês
             </CardTitle>
             <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Transação
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -435,6 +443,13 @@ export default function TransactionsMonthly() {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de nova transação */}
+      <AddTransactionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onTransactionAdded={loadTransactions}
+      />
     </div>
   );
 }

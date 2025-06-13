@@ -18,14 +18,19 @@ export const addTransaction = async (userId: string, transaction: Omit<Transacti
   // Gerar monthRef baseado na data
   const monthRef = `${transaction.date.getFullYear()}-${String(transaction.date.getMonth() + 1).padStart(2, '0')}`;
   
+  // Garantir que originalDate nunca seja undefined (usar date como fallback)
+  const originalDate = transaction.originalDate || transaction.date;
+  
   const transactionData = {
     ...transaction,
     userId,
     monthRef,
+    originalDate: Timestamp.fromDate(originalDate),
     createdAt: Timestamp.fromDate(new Date()),
     date: Timestamp.fromDate(transaction.date),
-    originalDate: transaction.originalDate ? Timestamp.fromDate(transaction.originalDate) : undefined,
   };
+
+  console.log('Salvando transação no Firestore:', transactionData);
 
   const docRef = await addDoc(collection(db, "users", userId, "transactions"), transactionData);
   
