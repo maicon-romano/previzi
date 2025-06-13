@@ -80,7 +80,7 @@ export default function Dashboard() {
 
   const COLORS = ['#3B82F6', '#EF4444', '#F97316', '#EAB308', '#10B981', '#8B5CF6', '#EC4899'];
 
-  // Enhanced evolution chart data
+  // Enhanced evolution chart data with income sources
   const getEvolutionData = () => {
     const months = parseInt(chartPeriod);
     const monthlyData = new Map();
@@ -96,6 +96,7 @@ export default function Dashboard() {
         income: 0,
         expenses: 0,
         balance: 0,
+        sources: new Map(),
       });
     }
 
@@ -108,6 +109,13 @@ export default function Dashboard() {
         const monthData = monthlyData.get(monthKey);
         if (transaction.type === 'income') {
           monthData.income += transaction.amount;
+          
+          // Track income sources
+          const source = transaction.source || 'Não informado';
+          if (!monthData.sources.has(source)) {
+            monthData.sources.set(source, 0);
+          }
+          monthData.sources.set(source, monthData.sources.get(source) + transaction.amount);
         } else {
           monthData.expenses += transaction.amount;
         }
@@ -115,10 +123,36 @@ export default function Dashboard() {
       }
     });
 
-    return Array.from(monthlyData.values());
+    return Array.from(monthlyData.values()).map(month => ({
+      ...month,
+      sources: Object.fromEntries(month.sources),
+    }));
+  };
+
+  // Get income sources breakdown for current month
+  const getIncomeSourcesBreakdown = () => {
+    const currentMonthIncome = currentMonthTransactions.filter(t => t.type === 'income');
+    const sourcesMap = new Map();
+    
+    currentMonthIncome.forEach(transaction => {
+      const source = transaction.source || 'Não informado';
+      if (!sourcesMap.has(source)) {
+        sourcesMap.set(source, 0);
+      }
+      sourcesMap.set(source, sourcesMap.get(source) + transaction.amount);
+    });
+
+    return Array.from(sourcesMap.entries())
+      .map(([source, amount]) => ({
+        source,
+        amount,
+        percentage: totalIncome > 0 ? ((amount / totalIncome) * 100).toFixed(1) : 0
+      }))
+      .sort((a, b) => b.amount - a.amount);
   };
 
   const evolutionData = getEvolutionData();
+  const incomeSourcesBreakdown = getIncomeSourcesBreakdown();
 
   // Recent transactions (last 5)
   const recentTransactions = transactions
@@ -305,7 +339,7 @@ export default function Dashboard() {
           </Card>
         </motion.div>
 
-        {/* Enhanced Evolution Chart */}
+        {/* Enhanced Evolution Chart with Income Sources */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -316,7 +350,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <i className="fas fa-chart-line text-green-600 text-sm"></i>
-                  Evolução das Receitas
+                  Evolução das Receitas por Fonte
                 </CardTitle>
                 <Select value={chartPeriod} onValueChange={setChartPeriod}>
                   <SelectTrigger className="w-32">
@@ -333,54 +367,113 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               {evolutionData.length > 0 ? (
-                <div className="chart-container">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={evolutionData}>
-                      <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                      <XAxis 
-                        dataKey="month" 
-                        tick={{ fontSize: 12 }}
-                        stroke="#6B7280"
-                      />
-                      <YAxis 
-                        tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
-                        tick={{ fontSize: 12 }}
-                        stroke="#6B7280"
-                      />
-                      <Tooltip 
-                        formatter={(value, name) => [
-                          `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-                          name === 'income' ? 'Receitas' : name === 'expenses' ? 'Despesas' : 'Saldo'
-                        ]}
-                        labelStyle={{ color: '#374151' }}
-                        contentStyle={{ 
-                          backgroundColor: '#F9FAFB',
-                          border: '1px solid #E5E7EB',
-                          borderRadius: '8px'
-                        }}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="income" 
-                        stroke="#10B981" 
-                        strokeWidth={3}
-                        dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
-                        name="Receitas"
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="balance" 
-                        stroke="#3B82F6" 
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                        dot={{ fill: '#3B82F6', strokeWidth: 2, r: 3 }}
-                        name="Saldo"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  {/* Chart */}
+                  <div className="lg:col-span-2">
+                    <div className="chart-container">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={evolutionData}>
+                          <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                          <XAxis 
+                            dataKey="month" 
+                            tick={{ fontSize: 12 }}
+                            stroke="#6B7280"
+                          />
+                          <YAxis 
+                            tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                            tick={{ fontSize: 12 }}
+                            stroke="#6B7280"
+                          />
+                          <Tooltip 
+                            content={({ active, payload, label }) => {
+                              if (active && payload && payload.length) {
+                                const data = payload[0].payload;
+                                const sources = data.sources || {};
+                                return (
+                                  <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                                    <p className="font-medium text-gray-900 mb-2">{label}</p>
+                                    <div className="space-y-1">
+                                      <p className="text-green-600 font-semibold">
+                                        Total: R$ {Number(data.income).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                      </p>
+                                      {Object.entries(sources).length > 0 && (
+                                        <div className="mt-2 pt-2 border-t border-gray-100">
+                                          <p className="text-xs font-medium text-gray-600 mb-1">Fontes:</p>
+                                          {Object.entries(sources).map(([source, amount]) => (
+                                            <div key={source} className="flex justify-between text-xs">
+                                              <span className="text-gray-600">{source}:</span>
+                                              <span className="font-medium">R$ {Number(amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="income" 
+                            stroke="#10B981" 
+                            strokeWidth={3}
+                            dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
+                            name="Receitas"
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="balance" 
+                            stroke="#3B82F6" 
+                            strokeWidth={2}
+                            strokeDasharray="5 5"
+                            dot={{ fill: '#3B82F6', strokeWidth: 2, r: 3 }}
+                            name="Saldo"
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Income Sources Breakdown */}
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1">
+                      <i className="fas fa-users text-xs"></i>
+                      Fontes do Mês Atual
+                    </h4>
+                    {incomeSourcesBreakdown.length > 0 ? (
+                      <div className="space-y-2">
+                        {incomeSourcesBreakdown.map((item, index) => (
+                          <div key={item.source} className="bg-gray-50 p-2 rounded-lg">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-sm font-medium text-gray-700">{item.source}</span>
+                              <span className="text-xs text-gray-500">{item.percentage}%</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 bg-gray-200 rounded-full h-1.5 mr-2">
+                                <div 
+                                  className="bg-green-500 h-1.5 rounded-full" 
+                                  style={{ width: `${item.percentage}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-xs font-semibold text-green-600">
+                                R$ {item.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-4 text-gray-500">
+                        <i className="fas fa-info-circle text-lg mb-2"></i>
+                        <p className="text-xs">Nenhuma fonte de receita registrada</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : (
-                <div className="h-64 flex items-center justify-center text-gray-500">
+                <div className="chart-container flex items-center justify-center text-gray-500">
                   <div className="text-center">
                     <i className="fas fa-chart-line text-4xl mb-2"></i>
                     <p>Dados históricos não disponíveis</p>
