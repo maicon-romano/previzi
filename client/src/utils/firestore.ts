@@ -68,11 +68,11 @@ const generateRecurringTransactions = async (userId: string, originalTransaction
   }
 };
 
-// Função para buscar todas as transações do usuário
+// Função para buscar todas as transações do usuário (otimizada)
 export const getTransactions = async (userId: string): Promise<TransactionType[]> => {
+  // Query simplificada - remove filtro userId redundante já que estamos na subcoleção do usuário
   const q = query(
     collection(db, "users", userId, "transactions"),
-    where("userId", "==", userId),
     orderBy("date", "desc")
   );
   
@@ -97,14 +97,14 @@ export const getTransactions = async (userId: string): Promise<TransactionType[]
   return transactions;
 };
 
-// Função para buscar transações por mês usando filtros de data conforme especificado
+// Função para buscar transações por mês usando filtros de data otimizada (sem índice composto)
 export const getTransactionsByMonth = async (userId: string, year: number, month: number): Promise<TransactionType[]> => {
   const start = startOfMonth(new Date(year, month - 1)); // month é 1-based, Date é 0-based
   const end = endOfMonth(new Date(year, month - 1));
   
+  // Query simplificada para evitar erro de índice - remove o filtro userId redundante
   const q = query(
     collection(db, "users", userId, "transactions"),
-    where("userId", "==", userId),
     where("date", ">=", Timestamp.fromDate(start)),
     where("date", "<=", Timestamp.fromDate(end)),
     orderBy("date", "desc")
@@ -131,7 +131,7 @@ export const getTransactionsByMonth = async (userId: string, year: number, month
   return transactions;
 };
 
-// Função com listener em tempo real para transações do mês
+// Função com listener em tempo real para transações do mês (otimizada)
 export const subscribeToMonthlyTransactions = (
   userId: string, 
   year: number, 
@@ -141,9 +141,9 @@ export const subscribeToMonthlyTransactions = (
   const start = startOfMonth(new Date(year, month - 1));
   const end = endOfMonth(new Date(year, month - 1));
   
+  // Query simplificada para evitar erro de índice
   const q = query(
     collection(db, "users", userId, "transactions"),
-    where("userId", "==", userId),
     where("date", ">=", Timestamp.fromDate(start)),
     where("date", "<=", Timestamp.fromDate(end)),
     orderBy("date", "desc")
