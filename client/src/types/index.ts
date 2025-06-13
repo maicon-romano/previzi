@@ -1,13 +1,14 @@
 export interface TransactionType {
   id: string;
   type: "income" | "expense";
-  amount: number;
+  amount: number | null;
   category: string;
   description: string;
   source: string;
   date: Date;
   status: "paid" | "pending";
   recurring: boolean;
+  isVariableAmount?: boolean; // Para transações recorrentes com valor variável
   userId: string;
   createdAt: Date;
 }

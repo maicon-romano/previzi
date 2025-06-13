@@ -48,6 +48,7 @@ const transactionSchema = z.object({
   date: z.string().min(1, "Data é obrigatória"),
   status: z.enum(["paid", "pending"]),
   recurring: z.boolean(),
+  isVariableAmount: z.boolean().optional(),
 });
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
@@ -73,11 +74,13 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
       date: new Date().toISOString().split("T")[0],
       status: "paid",
       recurring: false,
+      isVariableAmount: false,
     },
   });
 
   const watchType = form.watch("type");
   const watchRecurring = form.watch("recurring");
+  const watchVariableAmount = form.watch("isVariableAmount");
 
   const onSubmit = async (data: TransactionFormData) => {
     if (!currentUser) return;
@@ -87,24 +90,31 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
       const transactionDate = new Date(data.date);
       const monthRef = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
       
-      // Converter valor corretamente removendo formatação
-      const cleanValue = data.amount.replace(/[R$\s.,]/g, '').replace(',', '.');
-      const numValue = parseFloat(cleanValue);
+      // Para transações recorrentes com valor variável, permitir amount como null
+      let amount: number | null = null;
       
-      if (isNaN(numValue) || numValue <= 0) {
-        throw new Error("Valor deve ser um número positivo");
+      if (!data.recurring || !data.isVariableAmount) {
+        // Validar e converter valor apenas se não for recorrente variável
+        const cleanValue = data.amount.replace(/[R$\s.,]/g, '').replace(',', '.');
+        const numValue = parseFloat(cleanValue);
+        
+        if (isNaN(numValue) || numValue <= 0) {
+          throw new Error("Valor deve ser um número positivo");
+        }
+        amount = numValue;
       }
 
       // Garantir que todos os campos estão com tipos corretos conforme estrutura real do Firestore
       const transactionData = {
         type: data.type,
-        amount: numValue,
+        amount: amount,
         category: data.category,
         description: data.description,
         source: data.source,
         date: transactionDate,
         status: data.status,
         recurring: data.recurring,
+        isVariableAmount: data.isVariableAmount || false,
       };
 
       console.log('Dados da transação a serem salvos:', transactionData);

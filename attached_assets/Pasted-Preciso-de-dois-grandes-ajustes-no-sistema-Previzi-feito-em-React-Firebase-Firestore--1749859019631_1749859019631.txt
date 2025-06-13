@@ -1,0 +1,71 @@
+Preciso de dois grandes ajustes no sistema Previzi, feito em React + Firebase Firestore:
+
+---
+
+🟢 PARTE 1: AJUSTES NA ADIÇÃO DE TRANSAÇÕES + RECORRÊNCIA VARIÁVEL
+
+1. Corrija o erro ao adicionar transações, atualmente recebo:
+
+FirebaseError: The query requires an index.
+
+A consulta que dá erro parece envolver filtros combinados com os campos:
+- description
+- recurring
+- date
+- __name__
+
+✅ O que fazer:
+- Verificar a query que dispara no momento da criação da transação (provavelmente na função de verificação de duplicatas para recorrentes)
+- Criar o índice composto necessário no Firestore com esses campos
+- Ajustar a query para evitar consultas desnecessárias se possível
+- Garantir que o sistema continue protegendo contra duplicação de transações recorrentes futuras no mesmo mês
+
+2. Adicionar suporte à criação de transações **recorrentes com valor variável**.
+
+✅ Nova funcionalidade:
+- No formulário de adição de transações, incluir um checkbox chamado **"Recorrente"**
+- E um segundo checkbox chamado **"Valor variável (ex: Conta de Luz)"**
+- Se o usuário marcar como recorrente + variável:
+  - O sistema deve criar, nos próximos 12 meses, **uma cópia da transação por mês**, com o campo `amount` como `null` ou `0`
+  - O usuário poderá editar o valor manualmente mês a mês depois
+- Se for recorrente e fixo:
+  - Criar as cópias futuras com o mesmo valor
+- As cópias devem ter o campo `date` ajustado mês a mês
+- Cada cópia deve ter:
+  - type, category, source, status: "pending"
+  - createdAt: timestamp
+  - userId correto
+
+3. Garantir que ao carregar os meses futuros, as transações recorrentes apareçam corretamente, inclusive as variáveis (mesmo com valor ainda não definido).
+
+---
+
+🟢 PARTE 2: MELHORIA VISUAL NAS NOTIFICAÇÕES (TOASTS)
+
+1. Todo toast (notificação de sucesso, erro, info) deve ter:
+
+✅ Um botão ou ícone de fechar (exemplo: um "X" no canto superior ou lateral direita da notificação)
+
+✅ Tempo de duração automática curto (exemplo: 3 a 5 segundos)
+
+✅ Uma barra de progresso visual na parte inferior ou superior do toast mostrando o tempo restante antes de sumir
+
+✅ Se o usuário clicar no "X", o toast deve desaparecer imediatamente
+
+✅ Limitar para no máximo 3 toasts simultâneos na tela
+
+✅ Visual moderno, com cores padrão:
+- Sucesso: Verde
+- Erro: Vermelho
+- Info: Azul
+- Aviso: Amarelo
+
+✅ Responsivo para mobile (posição inferior direita ou ajustável em telas menores)
+
+✅ Preferência por usar uma biblioteca leve como **Sonner** ou **React Toastify**, mas pode ser implementado com Tailwind + Framer Motion se desejar fazer um sistema custom.
+
+---
+
+🛠️ Tecnologias usadas: React, Tailwind CSS, Firebase Firestore.
+
+Implemente tudo de forma otimizada, evitando consultas desnecessárias ao Firestore.

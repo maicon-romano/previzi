@@ -15,22 +15,28 @@ import { startOfMonth, endOfMonth } from "date-fns";
 import { db } from "../firebase";
 import { TransactionType, CategoryType } from "../types";
 
-// Função para verificar se já existem transações recorrentes similares
+// Função simplificada para verificar se já existem transações recorrentes similares
 const checkExistingRecurringTransactions = async (userId: string, transaction: Omit<TransactionType, "id" | "userId" | "createdAt">): Promise<boolean> => {
-  const futureDate = new Date(transaction.date);
-  futureDate.setMonth(futureDate.getMonth() + 1);
-  
+  // Query simplificada para evitar erro de índice composto
   const q = query(
     collection(db, "users", userId, "transactions"),
     where("description", "==", transaction.description),
-    where("category", "==", transaction.category),
-    where("amount", "==", transaction.amount),
-    where("recurring", "==", true),
-    where("date", ">=", Timestamp.fromDate(futureDate))
+    where("recurring", "==", true)
   );
   
   const querySnapshot = await getDocs(q);
-  return !querySnapshot.empty;
+  
+  // Filtrar manualmente pelo category e verificar se tem transações futuras
+  const futureDate = new Date(transaction.date);
+  futureDate.setMonth(futureDate.getMonth() + 1);
+  
+  const hasExisting = querySnapshot.docs.some(doc => {
+    const data = doc.data();
+    const docDate = data.date.toDate();
+    return data.category === transaction.category && docDate >= futureDate;
+  });
+  
+  return hasExisting;
 };
 
 // Transaction utilities using the real Firestore structure
