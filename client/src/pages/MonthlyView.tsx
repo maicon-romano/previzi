@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { getTransactionsByMonth } from "../utils/firebase";
+import { getTransactionsByMonth, updateTransaction, parseMonthString } from "../utils/firestore";
 import type { TransactionType } from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { ChevronLeft, ChevronRight, Calendar, DollarSign } from "lucide-react";
 import { motion } from "framer-motion";
-import { updateTransaction } from "../utils/firebase";
 import { useToast } from "@/hooks/use-toast";
 import EditVariableTransactionModal from "../components/EditVariableTransactionModal";
 
@@ -54,7 +53,8 @@ export default function MonthlyView() {
     
     setIsLoading(true);
     try {
-      const monthTransactions = await getTransactionsByMonth(currentUser.uid, selectedMonth);
+      const { year, month } = parseMonthString(selectedMonth);
+      const monthTransactions = await getTransactionsByMonth(currentUser.uid, year, month);
       setTransactions(monthTransactions);
     } catch (error) {
       console.error('Erro ao carregar transações:', error);
@@ -235,11 +235,8 @@ export default function MonthlyView() {
                       </Badge>
                       {transaction.recurring && (
                         <Badge variant="outline">
-                          {transaction.recurringType === 'variable' ? 'Recorrente Variável' : 'Recorrente Fixa'}
+                          Recorrente
                         </Badge>
-                      )}
-                      {transaction.isGenerated && (
-                        <Badge variant="outline">Gerada</Badge>
                       )}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-gray-600">

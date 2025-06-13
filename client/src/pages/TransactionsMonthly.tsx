@@ -377,11 +377,8 @@ export default function TransactionsMonthly() {
                           {transaction.recurring && (
                             <div className="flex gap-1 mt-1">
                               <Badge variant="outline" className="text-xs">
-                                {transaction.recurringType === 'variable' ? 'Recorrente Variável' : 'Recorrente Fixa'}
+                                Recorrente
                               </Badge>
-                              {transaction.isGenerated && (
-                                <Badge variant="outline" className="text-xs">Gerada</Badge>
-                              )}
                             </div>
                           )}
                         </div>
