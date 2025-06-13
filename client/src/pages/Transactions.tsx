@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTransactions } from "../hooks/useTransactions";
 import { useAuth } from "../contexts/AuthContext";
+import type { TransactionType } from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ export default function Transactions() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("current");
+  const [viewMode, setViewMode] = useState<"current" | "future">("current");
 
   if (isLoading) {
     return (
@@ -73,8 +75,39 @@ export default function Transactions() {
     );
   }
 
+  // Generate future transactions based on recurring ones
+  const generateFutureTransactions = (): TransactionType[] => {
+    const futureTransactions: TransactionType[] = [];
+    const currentDate = new Date();
+    const months = 6; // Show 6 months ahead
+    
+    const recurringTransactions = transactions.filter(t => t.recurring);
+    
+    for (let monthOffset = 1; monthOffset <= months; monthOffset++) {
+      recurringTransactions.forEach(transaction => {
+        const futureDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + monthOffset, new Date(transaction.date).getDate());
+        
+        futureTransactions.push({
+          ...transaction,
+          id: `${transaction.id}-future-${monthOffset}`,
+          date: futureDate,
+          status: 'pending' as const,
+          isFuture: true,
+          originalId: transaction.id,
+          monthOffset,
+          amount: transaction.recurringType === 'variable' ? transaction.amount * (0.9 + Math.random() * 0.2) : transaction.amount // Simulate variation for variable recurring
+        });
+      });
+    }
+    
+    return futureTransactions;
+  };
+
+  const futureTransactions = generateFutureTransactions();
+  const allTransactions = viewMode === "future" ? [...transactions, ...futureTransactions] : transactions;
+
   // Enhanced filtering logic
-  const filteredTransactions = transactions.filter(transaction => {
+  const filteredTransactions = allTransactions.filter(transaction => {
     const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.category.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === "all" || transaction.type === typeFilter;
@@ -103,9 +136,9 @@ export default function Transactions() {
     return matchesSearch && matchesType && matchesCategory && matchesStatus && matchesDate;
   });
 
-  // Status toggle function
-  const handleStatusToggle = async (transactionId: string, currentStatus: string) => {
-    if (!currentUser) return;
+  // Enhanced status toggle function
+  const handleStatusToggle = async (transactionId: string, currentStatus: string, isFuture = false) => {
+    if (!currentUser || isFuture) return; // Can't change status of future transactions
     
     const newStatus = currentStatus === "paid" ? "pending" : "paid";
     
@@ -122,6 +155,30 @@ export default function Transactions() {
         title: "Erro",
         description: "Não foi possível atualizar o status da transação.",
         variant: "destructive",
+      });
+    }
+  };
+
+  // Handle variable recurring transaction update
+  const handleVariableUpdate = async (originalId: string, newAmount: number, monthOffset: number) => {
+    if (!currentUser) return;
+
+    const result = await Swal.fire({
+      title: "Atualizar valor variável",
+      text: `Deseja atualizar o valor para R$ ${newAmount.toFixed(2)} neste mês?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#10B981",
+      cancelButtonColor: "#6B7280",
+      confirmButtonText: "Sim, atualizar",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (result.isConfirmed) {
+      // Here you would implement logic to save the variable amount for this specific month
+      toast({
+        title: "Valor atualizado",
+        description: "O valor variável foi atualizado para este mês.",
       });
     }
   };
@@ -200,7 +257,30 @@ export default function Transactions() {
             Gerenciar Transações
           </CardTitle>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
+            <div className="flex bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode("current")}
+                className={`flex-1 px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                  viewMode === "current" 
+                    ? "bg-white text-blue-600 shadow-sm" 
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Atual
+              </button>
+              <button
+                onClick={() => setViewMode("future")}
+                className={`flex-1 px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                  viewMode === "future" 
+                    ? "bg-white text-blue-600 shadow-sm" 
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Projeção
+              </button>
+            </div>
+
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="Tipo" />

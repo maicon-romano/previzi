@@ -8,8 +8,12 @@ export interface TransactionType {
   date: Date;
   status: "paid" | "pending";
   recurring: boolean;
+  recurringType?: "fixed" | "variable";
   userId: string;
   createdAt: Date;
+  isFuture?: boolean;
+  originalId?: string;
+  monthOffset?: number;
 }
 
 export interface CategoryType {
