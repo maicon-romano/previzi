@@ -117,12 +117,13 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Nova Transação</DialogTitle>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="flex-1 overflow-y-auto pr-2">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 form-compact">
             <FormField
               control={form.control}
               name="type"
@@ -300,16 +301,17 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
               />
             )}
 
-            <div className="flex justify-end space-x-3 pt-4">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Salvando..." : "Salvar"}
-              </Button>
-            </div>
-          </form>
-        </Form>
+              <div className="flex justify-end space-x-3 pt-4 flex-shrink-0">
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? "Salvando..." : "Salvar"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
       </DialogContent>
     </Dialog>
   );

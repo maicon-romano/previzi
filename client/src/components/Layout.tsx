@@ -11,6 +11,7 @@ export default function Layout({ children }: LayoutProps) {
   const { currentUser, logout } = useAuth();
   const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -47,16 +48,28 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${
+      <div className={`fixed inset-y-0 left-0 z-50 bg-white shadow-lg border-r border-gray-200 transform transition-all duration-300 ease-in-out ${
+        isSidebarCollapsed ? "w-16" : "w-64"
+      } ${
         isSidebarOpen ? "translate-x-0" : "-translate-x-full"
       } lg:translate-x-0`}>
         <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="flex items-center px-4 py-3 border-b border-gray-200">
-            <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg mr-2">
-              <i className="fas fa-chart-line text-white text-sm"></i>
+          {/* Logo and Collapse Button */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+            <div className="flex items-center">
+              <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg mr-2">
+                <i className="fas fa-chart-line text-white text-sm"></i>
+              </div>
+              {!isSidebarCollapsed && (
+                <h1 className="text-lg font-bold text-gray-900">Previzi</h1>
+              )}
             </div>
-            <h1 className="text-lg font-bold text-gray-900">Previzi</h1>
+            <button
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="hidden lg:flex w-6 h-6 items-center justify-center rounded-md hover:bg-gray-100 transition-colors"
+            >
+              <i className={`fas ${isSidebarCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'} text-xs text-gray-500`}></i>
+            </button>
           </div>
 
           {/* Navigation */}
@@ -68,14 +81,20 @@ export default function Layout({ children }: LayoutProps) {
                   <li key={item.name}>
                     <Link
                       href={item.href}
-                      className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors group relative ${
                         isActive
                           ? "bg-primary/10 text-primary"
                           : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                       }`}
+                      title={isSidebarCollapsed ? item.name : ""}
                     >
-                      <i className={`${item.icon} mr-2 text-sm`}></i>
-                      {item.name}
+                      <i className={`${item.icon} ${isSidebarCollapsed ? 'mx-auto' : 'mr-2'} text-sm`}></i>
+                      {!isSidebarCollapsed && item.name}
+                      {isSidebarCollapsed && (
+                        <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                          {item.name}
+                        </div>
+                      )}
                     </Link>
                   </li>
                 );
@@ -117,7 +136,7 @@ export default function Layout({ children }: LayoutProps) {
       </div>
 
       {/* Main Content */}
-      <div className="lg:ml-64 min-h-screen">
+      <div className={`${isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'} min-h-screen transition-all duration-300`}>
         {/* Top Bar */}
         <header className="bg-white shadow-sm border-b border-gray-200 px-4 py-3">
           <div className="flex items-center justify-between">

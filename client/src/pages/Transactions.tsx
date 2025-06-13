@@ -440,17 +440,42 @@ export default function Transactions() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Switch
-                            checked={transaction.status === 'paid'}
-                            onCheckedChange={() => handleStatusToggle(transaction.id, transaction.status)}
-                            disabled={false}
-                          />
-                          <Badge 
-                            variant={transaction.status === 'paid' ? 'default' : 'secondary'}
-                            className={transaction.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}
-                          >
-                            {transaction.status === 'paid' ? 'Pago' : 'Pendente'}
-                          </Badge>
+                          {transaction.isFuture ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                Agendado
+                              </Badge>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleStatusToggle(transaction.id, transaction.status, transaction.isFuture)}
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                                transaction.status === 'paid' ? 'bg-green-500' : 'bg-gray-300'
+                              }`}
+                              disabled={transaction.isFuture}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                  transaction.status === 'paid' ? 'translate-x-6' : 'translate-x-1'
+                                }`}
+                              />
+                            </button>
+                          )}
+                          <span className={`text-xs font-medium ${
+                            transaction.isFuture 
+                              ? 'text-blue-600'
+                              : transaction.status === 'paid' 
+                                ? 'text-green-600' 
+                                : 'text-orange-600'
+                          }`}>
+                            {transaction.isFuture 
+                              ? 'Agendado' 
+                              : transaction.status === 'paid' 
+                                ? 'Pago' 
+                                : 'Pendente'
+                            }
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
