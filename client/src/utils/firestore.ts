@@ -15,6 +15,24 @@ import { startOfMonth, endOfMonth } from "date-fns";
 import { db } from "../firebase";
 import { TransactionType, CategoryType } from "../types";
 
+// Função para verificar se já existem transações recorrentes similares
+const checkExistingRecurringTransactions = async (userId: string, transaction: Omit<TransactionType, "id" | "userId" | "createdAt">): Promise<boolean> => {
+  const futureDate = new Date(transaction.date);
+  futureDate.setMonth(futureDate.getMonth() + 1);
+  
+  const q = query(
+    collection(db, "users", userId, "transactions"),
+    where("description", "==", transaction.description),
+    where("category", "==", transaction.category),
+    where("amount", "==", transaction.amount),
+    where("recurring", "==", true),
+    where("date", ">=", Timestamp.fromDate(futureDate))
+  );
+  
+  const querySnapshot = await getDocs(q);
+  return !querySnapshot.empty;
+};
+
 // Transaction utilities using the real Firestore structure
 export const addTransaction = async (userId: string, transaction: Omit<TransactionType, "id" | "userId" | "createdAt">) => {
   const transactionData = {
@@ -34,37 +52,70 @@ export const addTransaction = async (userId: string, transaction: Omit<Transacti
 
   const docRef = await addDoc(collection(db, "users", userId, "transactions"), transactionData);
   
-  // Se a transação é recorrente, gerar transações futuras simples
+  // Se a transação é recorrente, verificar se já existem similares e gerar transações futuras
   if (transaction.recurring) {
-    await generateRecurringTransactions(userId, transaction);
+    console.log('Transação marcada como recorrente, verificando duplicatas...');
+    
+    const hasExisting = await checkExistingRecurringTransactions(userId, transaction);
+    if (!hasExisting) {
+      await generateRecurringTransactions(userId, transaction);
+      console.log('✅ Transações recorrentes criadas para os próximos 12 meses');
+    } else {
+      console.log('⚠️ Transações recorrentes similares já existem, pulando criação automática');
+    }
   }
   
   return docRef.id;
 };
 
-// Função simplificada para gerar transações recorrentes
-const generateRecurringTransactions = async (userId: string, originalTransaction: Omit<TransactionType, "id" | "userId" | "createdAt">) => {
-  // Gerar apenas 3 meses futuros para recorrentes
-  const monthsToGenerate = 3;
+// Função para gerar transações recorrentes automaticamente
+const generateRecurringTransactions = async (userId: string, originalTransaction: Omit<TransactionType, "id" | "userId" | "createdAt">, monthsToGenerate: number = 12) => {
+  // Gerar transações para os próximos N meses (padrão: 12)
+  const originalDate = new Date(originalTransaction.date);
+  
+  console.log(`Gerando ${monthsToGenerate} transações recorrentes para a transação: ${originalTransaction.description}`);
+  
+  const batch = [];
   
   for (let i = 1; i <= monthsToGenerate; i++) {
-    const futureDate = new Date(originalTransaction.date);
+    // Criar nova data mantendo o mesmo dia do mês
+    const futureDate = new Date(originalDate);
     futureDate.setMonth(futureDate.getMonth() + i);
+    
+    // Se o dia não existir no novo mês (ex: 31 de janeiro -> 28/29 de fevereiro)
+    // o JavaScript automaticamente ajusta para o último dia válido
+    if (futureDate.getDate() !== originalDate.getDate()) {
+      // Se o dia mudou, definir para o último dia do mês
+      futureDate.setDate(0); // Volta para o último dia do mês anterior
+      futureDate.setMonth(futureDate.getMonth() + 1);
+      futureDate.setDate(0); // Último dia do mês desejado
+    }
     
     const futureTransaction = {
       type: originalTransaction.type,
-      amount: originalTransaction.amount,
+      amount: originalTransaction.amount, // Sempre usar o valor original
       category: originalTransaction.category,
       description: originalTransaction.description,
       source: originalTransaction.source,
       date: Timestamp.fromDate(futureDate),
-      status: 'pending' as const,
+      status: 'pending' as const, // Todas as futuras começam como pendentes
       recurring: originalTransaction.recurring,
       userId,
       createdAt: Timestamp.fromDate(new Date()),
     };
     
-    await addDoc(collection(db, "users", userId, "transactions"), futureTransaction);
+    batch.push(futureTransaction);
+  }
+  
+  // Criar todas as transações em lote para melhor performance
+  try {
+    for (const transaction of batch) {
+      await addDoc(collection(db, "users", userId, "transactions"), transaction);
+    }
+    console.log(`✅ ${batch.length} transações recorrentes criadas com sucesso`);
+  } catch (error) {
+    console.error('Erro ao criar transações recorrentes:', error);
+    throw error;
   }
 };
 
@@ -192,6 +243,70 @@ export const updateTransaction = async (userId: string, transactionId: string, u
 export const deleteTransaction = async (userId: string, transactionId: string) => {
   const docRef = doc(db, "users", userId, "transactions", transactionId);
   await deleteDoc(docRef);
+};
+
+// Função para deletar todas as instâncias futuras de uma transação recorrente
+export const deleteRecurringTransactionSeries = async (userId: string, originalTransaction: TransactionType) => {
+  if (!originalTransaction.recurring) {
+    throw new Error("Esta não é uma transação recorrente");
+  }
+
+  const originalDate = new Date(originalTransaction.date);
+  const futureStartDate = new Date(originalDate);
+  futureStartDate.setMonth(futureStartDate.getMonth() + 1);
+
+  // Buscar todas as transações futuras similares
+  const q = query(
+    collection(db, "users", userId, "transactions"),
+    where("description", "==", originalTransaction.description),
+    where("category", "==", originalTransaction.category),
+    where("amount", "==", originalTransaction.amount),
+    where("recurring", "==", true),
+    where("date", ">=", Timestamp.fromDate(futureStartDate))
+  );
+
+  const querySnapshot = await getDocs(q);
+  
+  // Deletar todas as instâncias futuras
+  const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+  await Promise.all(deletePromises);
+  
+  console.log(`🗑️ ${querySnapshot.docs.length} transações recorrentes futuras deletadas`);
+  return querySnapshot.docs.length;
+};
+
+// Função para buscar todas as instâncias de uma série de transações recorrentes
+export const getRecurringTransactionSeries = async (userId: string, originalTransaction: TransactionType): Promise<TransactionType[]> => {
+  if (!originalTransaction.recurring) {
+    return [originalTransaction];
+  }
+
+  const q = query(
+    collection(db, "users", userId, "transactions"),
+    where("description", "==", originalTransaction.description),
+    where("category", "==", originalTransaction.category),
+    where("amount", "==", originalTransaction.amount),
+    where("recurring", "==", true),
+    orderBy("date", "asc")
+  );
+
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      type: data.type,
+      amount: data.amount,
+      category: data.category,
+      description: data.description,
+      source: data.source,
+      date: data.date.toDate(),
+      status: data.status,
+      recurring: data.recurring,
+      userId: data.userId,
+      createdAt: data.createdAt.toDate(),
+    };
+  }) as TransactionType[];
 };
 
 // Função auxiliar para converter string de mês (YYYY-MM) para year/month

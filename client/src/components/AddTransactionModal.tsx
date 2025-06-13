@@ -111,10 +111,18 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
 
       await addTransaction(currentUser.uid, transactionData);
 
-      toast({
-        title: "Transação adicionada",
-        description: "A transação foi adicionada com sucesso.",
-      });
+      // Feedback específico para transações recorrentes
+      if (transactionData.recurring) {
+        toast({
+          title: "Transação Recorrente Criada",
+          description: "Transação principal criada e replicada automaticamente para os próximos 12 meses!",
+        });
+      } else {
+        toast({
+          title: "Transação adicionada",
+          description: "A transação foi adicionada com sucesso.",
+        });
+      }
 
       form.reset();
       onClose();

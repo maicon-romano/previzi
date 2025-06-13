@@ -104,7 +104,21 @@ Previzi is a comprehensive personal financial management system built with React
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+### December 13, 2024
+- **Fixed Firestore Index Error**: Resolved query index requirements by simplifying database queries to remove redundant userId filters
+- **Implemented Automatic Recurring Transactions**: Added system to automatically replicate recurring transactions for 12 future months
+- **Enhanced Transaction Management**: 
+  - Transactions marked as `recurring: true` now auto-generate future instances
+  - Each future transaction maintains same amount, category, description but with `status: "pending"`
+  - Proper date calculation handles month-end edge cases (e.g., Jan 31 → Feb 28/29)
+  - Added duplicate detection to prevent multiple recurring series creation
+- **Improved User Feedback**: Modal now shows specific messages when recurring transactions are created
+- **Added Batch Operations**: Functions to delete entire recurring transaction series and view all instances
+
 ## Changelog
 
 Changelog:
 - June 13, 2025. Initial setup
+- December 13, 2024. Recurring transactions system and Firestore optimization
