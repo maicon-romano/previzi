@@ -25,6 +25,7 @@ export default function Layout({ children }: LayoutProps) {
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: "fas fa-home" },
     { name: "Transações", href: "/transactions", icon: "fas fa-exchange-alt" },
+    { name: "Visão Mensal", href: "/monthly", icon: "fas fa-calendar-check" },
     { name: "Previsibilidade", href: "/predictability", icon: "fas fa-crystal-ball" },
     { name: "Calendário", href: "/calendar", icon: "fas fa-calendar-alt" },
     { name: "Categorias", href: "/categories", icon: "fas fa-tags" },
@@ -35,6 +36,7 @@ export default function Layout({ children }: LayoutProps) {
     const titles: Record<string, { title: string; subtitle: string }> = {
       "/dashboard": { title: "Dashboard", subtitle: "Visão geral das suas finanças" },
       "/transactions": { title: "Transações", subtitle: "Gerencie suas receitas e despesas" },
+      "/monthly": { title: "Visão Mensal", subtitle: "Navegue entre os meses e visualize suas transações recorrentes" },
       "/predictability": { title: "Previsibilidade", subtitle: "Projeções e planejamento financeiro" },
       "/calendar": { title: "Calendário", subtitle: "Visualização mensal das transações" },
       "/categories": { title: "Categorias", subtitle: "Organize suas categorias de receitas e despesas" },

@@ -51,21 +51,21 @@ export default function Dashboard() {
   });
 
   const totalIncome = currentMonthTransactions
-    .filter(t => t.type === "income")
-    .reduce((sum, t) => sum + t.amount, 0);
+    .filter(t => t.type === "income" && t.amount !== null)
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
 
   const totalExpenses = currentMonthTransactions
-    .filter(t => t.type === "expense")
-    .reduce((sum, t) => sum + t.amount, 0);
+    .filter(t => t.type === "expense" && t.amount !== null)
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
 
   const currentBalance = totalIncome - totalExpenses;
 
   // Enhanced chart data preparation
   const categoryData = currentMonthTransactions
-    .filter(t => t.type === "expense")
+    .filter(t => t.type === "expense" && t.amount !== null)
     .reduce((acc, transaction) => {
       const category = transaction.category;
-      acc[category] = (acc[category] || 0) + transaction.amount;
+      acc[category] = (acc[category] || 0) + (transaction.amount || 0);
       return acc;
     }, {} as Record<string, number>);
 
@@ -542,7 +542,7 @@ export default function Dashboard() {
                       <span className={`font-bold ${
                         transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {transaction.type === 'income' ? '+' : '-'}R$ {transaction.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        {transaction.type === 'income' ? '+' : '-'}R$ {(transaction.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </span>
                     </motion.div>
                   ))}
@@ -615,7 +615,7 @@ export default function Dashboard() {
                       </div>
                       <div className="text-right">
                         <span className="font-bold text-red-600">
-                          R$ {payment.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {(payment.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </span>
                         <div className="text-xs text-gray-500">{payment.category}</div>
                       </div>

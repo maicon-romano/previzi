@@ -29,6 +29,11 @@ function Router() {
           <Transactions />
         </ProtectedRoute>
       </Route>
+      <Route path="/monthly">
+        <ProtectedRoute>
+          <MonthlyView />
+        </ProtectedRoute>
+      </Route>
       <Route path="/predictability">
         <ProtectedRoute>
           <Predictability />
