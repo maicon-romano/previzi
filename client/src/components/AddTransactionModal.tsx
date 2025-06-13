@@ -36,6 +36,7 @@ import { TransactionType } from "../types";
 interface AddTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onTransactionAdded?: () => void;
 }
 
 const transactionSchema = z.object({
@@ -57,7 +58,7 @@ const defaultCategories = {
   expense: ["Moradia", "Alimentação", "Transporte", "Lazer", "Saúde", "Educação", "Outros"],
 };
 
-export default function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProps) {
+export default function AddTransactionModal({ isOpen, onClose, onTransactionAdded }: AddTransactionModalProps) {
   const { currentUser } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -88,14 +89,31 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
       const transactionDate = new Date(data.date);
       const monthRef = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
       
-      const transactionData: Omit<TransactionType, "id"> = {
-        ...data,
-        amount: parseFloat(data.amount),
+      // Converter valor corretamente removendo formatação
+      const cleanValue = data.amount.replace(/[R$\s.,]/g, '').replace(',', '.');
+      const numValue = parseFloat(cleanValue);
+      
+      if (isNaN(numValue) || numValue <= 0) {
+        throw new Error("Valor deve ser um número positivo");
+      }
+
+      // Garantir que todos os campos estão com tipos corretos
+      const transactionData = {
+        type: data.type,
+        amount: numValue,
+        category: data.category,
+        description: data.description,
+        source: data.source || undefined,
         date: transactionDate,
+        status: data.status,
+        recurring: data.recurring,
+        recurringType: data.recurring ? data.recurringType : undefined,
         monthRef,
-        userId: currentUser.uid,
-        createdAt: new Date(),
+        originalDate: transactionDate, // Usar data como fallback para originalDate
+        isGenerated: false,
       };
+
+      console.log('Dados da transação a serem salvos:', transactionData);
 
       await addTransaction(currentUser.uid, transactionData);
 
@@ -106,6 +124,11 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
 
       form.reset();
       onClose();
+      
+      // Chamar callback para atualizar lista em tempo real
+      if (onTransactionAdded) {
+        onTransactionAdded();
+      }
     } catch (error) {
       console.error("Error adding transaction:", error);
       toast({

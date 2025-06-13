@@ -26,6 +26,7 @@ import { ChevronLeft, ChevronRight, Calendar, Filter, Search } from "lucide-reac
 import { motion } from "framer-motion";
 import { getTransactionsByMonth, updateTransaction, deleteTransaction } from "../utils/firebase";
 import { useToast } from "@/hooks/use-toast";
+import AddTransactionModal from "../components/AddTransactionModal";
 import Swal from "sweetalert2";
 
 export default function TransactionsMonthly() {
