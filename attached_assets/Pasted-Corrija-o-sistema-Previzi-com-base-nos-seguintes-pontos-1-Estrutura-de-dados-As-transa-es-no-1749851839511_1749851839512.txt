@@ -1,0 +1,60 @@
+Corrija o sistema Previzi com base nos seguintes pontos:
+
+1. Estrutura de dados:
+As transações no Firestore seguem este padrão de campos:
+
+{
+  type: "income" ou "expense",
+  amount: number,
+  category: string,
+  description: string,
+  status: "paid" ou "pending",
+  date: timestamp,
+  createdAt: timestamp,
+  recurring: boolean,
+  source: string,
+  userId: string
+}
+
+2. Criação de transações:
+- Corrija o formulário de criação para salvar os campos com os nomes e tipos corretos (exemplo: usar `amount`, não `value`).
+- O campo `status` deve ser salvo como `"paid"` ou `"pending"`.
+- Garantir que campos como `userId`, `createdAt` e `date` estejam presentes.
+- Se o campo `recurring` for verdadeiro, o sistema deve salvar o campo como boolean.
+
+3. Leitura de transações:
+- Corrigir a consulta Firestore para buscar dentro de `/users/{uid}/transactions`.
+- Usar `where("userId", "==", uid)` e filtros por data (`date >=` e `date <=`) para filtrar por mês, ao invés de depender de campos que não existem como `monthRef`.
+- Caso queira, criar um filtro que use o campo `date` para buscar transações de um mês específico, usando o primeiro e último dia do mês como filtro.
+
+Exemplo de consulta para trazer todas as transações de junho/2025:
+
+```ts
+import { query, where, collection, getDocs } from "firebase/firestore";
+import { startOfMonth, endOfMonth } from "date-fns";
+
+const start = startOfMonth(new Date(2025, 5)); // Junho (mês 5, pois é zero-based)
+const end = endOfMonth(new Date(2025, 5));
+
+const q = query(
+  collection(db, "users", user.uid, "transactions"),
+  where("userId", "==", user.uid),
+  where("date", ">=", start),
+  where("date", "<=", end)
+);
+
+4. Atualização em tempo real:
+
+Se possível, usar onSnapshot() para exibir as transações por mês em tempo real.
+
+5. Conversão de valores:
+
+Garantir que o campo amount sempre seja um number, não string formatada como "R$ 5,00".
+
+6. Recorrentes variáveis:
+
+Salvar o campo recurring como true
+
+O campo amount pode inicialmente ser null ou 0 se for valor variável, mas o registro deve existir no mês futuro.
+
+Objetivo: Deixar tanto a criação quanto a leitura de transações 100% compatível com a estrutura real do Firestore atual. 

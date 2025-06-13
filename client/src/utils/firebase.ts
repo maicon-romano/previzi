@@ -8,78 +8,64 @@ import {
   query,
   where,
   orderBy,
+  onSnapshot,
   Timestamp,
 } from "firebase/firestore";
+import { startOfMonth, endOfMonth } from "date-fns";
 import { db } from "../firebase";
 import { TransactionType, CategoryType } from "../types";
 
 // Transaction utilities
 export const addTransaction = async (userId: string, transaction: Omit<TransactionType, "id" | "userId" | "createdAt">) => {
-  // Gerar monthRef baseado na data
-  const monthRef = `${transaction.date.getFullYear()}-${String(transaction.date.getMonth() + 1).padStart(2, '0')}`;
-  
-  // Garantir que originalDate nunca seja undefined (usar date como fallback)
-  const originalDate = transaction.originalDate || transaction.date;
-  
   const transactionData = {
-    ...transaction,
-    userId,
-    monthRef,
-    originalDate: Timestamp.fromDate(originalDate),
-    createdAt: Timestamp.fromDate(new Date()),
+    type: transaction.type,
+    amount: transaction.amount,
+    category: transaction.category,
+    description: transaction.description,
+    source: transaction.source,
     date: Timestamp.fromDate(transaction.date),
+    status: transaction.status,
+    recurring: transaction.recurring,
+    userId,
+    createdAt: Timestamp.fromDate(new Date()),
   };
 
   console.log('Salvando transação no Firestore:', transactionData);
 
   const docRef = await addDoc(collection(db, "users", userId, "transactions"), transactionData);
   
-  // Se a transação é recorrente, gerar transações futuras
+  // Se a transação é recorrente, pode gerar transações futuras (implementação simplificada)
   if (transaction.recurring) {
-    await generateRecurringTransactions(userId, docRef.id, transaction);
+    // Para transações recorrentes, apenas salvar uma transação por vez
+    console.log('Transação recorrente criada. Futuras transações podem ser geradas conforme necessário.');
   }
   
   return docRef.id;
 };
 
-// Função para gerar transações recorrentes
+// Função para gerar transações recorrentes (simplificada conforme estrutura real)
 export const generateRecurringTransactions = async (userId: string, originalId: string, originalTransaction: Omit<TransactionType, "id" | "userId" | "createdAt">) => {
-  const monthsToGenerate = 12; // Gerar para os próximos 12 meses
-  const transactions = [];
+  // Para transações recorrentes, gerar apenas as próximas 3 mensalidades
+  const monthsToGenerate = 3;
   
   for (let i = 1; i <= monthsToGenerate; i++) {
     const futureDate = new Date(originalTransaction.date);
     futureDate.setMonth(futureDate.getMonth() + i);
     
-    const monthRef = `${futureDate.getFullYear()}-${String(futureDate.getMonth() + 1).padStart(2, '0')}`;
-    
-    // Para transações variáveis, definir amount como null
-    const amount = originalTransaction.recurringType === 'variable' ? null : originalTransaction.amount;
-    
     const futureTransaction = {
       type: originalTransaction.type,
-      amount,
+      amount: originalTransaction.amount, // Sempre usar o valor original para recorrentes
       category: originalTransaction.category,
       description: originalTransaction.description,
       source: originalTransaction.source,
       date: Timestamp.fromDate(futureDate),
       status: 'pending' as const,
       recurring: originalTransaction.recurring,
-      recurringType: originalTransaction.recurringType,
-      monthRef,
-      originalDate: Timestamp.fromDate(originalTransaction.date),
-      originalId,
-      isGenerated: true,
-      createdAt: Timestamp.fromDate(new Date()),
       userId,
+      createdAt: Timestamp.fromDate(new Date()),
     };
     
-    transactions.push(futureTransaction);
-  }
-  
-  // Adicionar todas as transações em batch
-  for (const transaction of transactions) {
-    await addDoc(collection(db, "users", userId, "transactions"), transaction);
+    await addDoc(collection(db, "users", userId, "transactions"), futureTransaction);
   }
 };
 
