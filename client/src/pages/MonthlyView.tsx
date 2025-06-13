@@ -11,6 +11,7 @@ import { ChevronLeft, ChevronRight, Calendar, DollarSign } from "lucide-react";
 import { motion } from "framer-motion";
 import { updateTransaction } from "../utils/firebase";
 import { useToast } from "@/hooks/use-toast";
+import EditVariableTransactionModal from "../components/EditVariableTransactionModal";
 
 export default function MonthlyView() {
   const { currentUser } = useAuth();
@@ -21,6 +22,8 @@ export default function MonthlyView() {
   });
   const [transactions, setTransactions] = useState<TransactionType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingTransaction, setEditingTransaction] = useState<TransactionType | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const monthNames = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -93,6 +96,17 @@ export default function MonthlyView() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleEditTransaction = (transaction: TransactionType) => {
+    setEditingTransaction(transaction);
+    setIsEditModalOpen(true);
+  };
+
+  const handleTransactionUpdated = () => {
+    loadTransactions();
+    setIsEditModalOpen(false);
+    setEditingTransaction(null);
   };
 
   const totalIncome = transactions

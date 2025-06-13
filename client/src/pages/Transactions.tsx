@@ -92,10 +92,12 @@ export default function Transactions() {
           id: `${transaction.id}-future-${monthOffset}`,
           date: futureDate,
           status: 'pending' as const,
-          isFuture: true,
+          isGenerated: true,
           originalId: transaction.id,
-          monthOffset,
-          amount: transaction.recurringType === 'variable' ? transaction.amount * (0.9 + Math.random() * 0.2) : transaction.amount // Simulate variation for variable recurring
+          amount: transaction.recurringType === 'variable' ? 
+            (transaction.amount ? transaction.amount * (0.9 + Math.random() * 0.2) : null) : 
+            transaction.amount,
+          monthRef: `${futureDate.getFullYear()}-${String(futureDate.getMonth() + 1).padStart(2, '0')}`
         });
       });
     }
@@ -425,7 +427,10 @@ export default function Transactions() {
                         <span className={`font-semibold text-sm ${
                           transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                         }`}>
-                          {transaction.type === 'income' ? '+' : '-'}R$ {transaction.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          {transaction.amount !== null ? 
+                            `${transaction.type === 'income' ? '+' : '-'}R$ ${transaction.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` :
+                            'Valor não definido'
+                          }
                         </span>
                       </TableCell>
                       <TableCell>
@@ -440,7 +445,7 @@ export default function Transactions() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {transaction.isFuture ? (
+                          {transaction.isGenerated ? (
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                               <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
@@ -449,11 +454,11 @@ export default function Transactions() {
                             </div>
                           ) : (
                             <button
-                              onClick={() => handleStatusToggle(transaction.id, transaction.status, transaction.isFuture)}
+                              onClick={() => handleStatusToggle(transaction.id, transaction.status, transaction.isGenerated)}
                               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                                 transaction.status === 'paid' ? 'bg-green-500' : 'bg-gray-300'
                               }`}
-                              disabled={transaction.isFuture}
+                              disabled={transaction.isGenerated}
                             >
                               <span
                                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -463,13 +468,13 @@ export default function Transactions() {
                             </button>
                           )}
                           <span className={`text-xs font-medium ${
-                            transaction.isFuture 
+                            transaction.isGenerated 
                               ? 'text-blue-600'
                               : transaction.status === 'paid' 
                                 ? 'text-green-600' 
                                 : 'text-orange-600'
                           }`}>
-                            {transaction.isFuture 
+                            {transaction.isGenerated 
                               ? 'Agendado' 
                               : transaction.status === 'paid' 
                                 ? 'Pago' 
@@ -508,7 +513,7 @@ export default function Transactions() {
                 <div className="flex items-center gap-2">
                   <span>Total:</span>
                   <span className="font-bold text-blue-600">
-                    R$ {filteredTransactions.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {filteredTransactions.reduce((sum, t) => sum + (t.type === 'income' ? (t.amount || 0) : -(t.amount || 0)), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>
