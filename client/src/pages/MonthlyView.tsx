@@ -247,29 +247,11 @@ export default function MonthlyView() {
                   </div>
                   
                   <div className="flex items-center gap-4">
-                    {transaction.amount !== null ? (
-                      <span className={`text-lg font-bold ${
-                        transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {transaction.type === 'income' ? '+' : '-'}R$ {transaction.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </span>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold text-gray-400">
-                          Valor não definido
-                        </span>
-                        {transaction.recurringType === 'variable' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEditTransaction(transaction)}
-                            className="text-xs"
-                          >
-                            Definir Valor
-                          </Button>
-                        )}
-                      </div>
-                    )}
+                    <span className={`text-lg font-bold ${
+                      transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {transaction.type === 'income' ? '+' : '-'}R$ {transaction.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
                     
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-600">
@@ -279,7 +261,6 @@ export default function MonthlyView() {
                         checked={transaction.status === 'paid'}
                         onCheckedChange={() => handleStatusToggle(transaction)}
                         className="data-[state=checked]:bg-green-500"
-                        disabled={transaction.amount === null}
                       />
                     </div>
                   </div>
