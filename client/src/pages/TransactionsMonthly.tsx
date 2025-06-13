@@ -158,7 +158,7 @@ export default function TransactionsMonthly() {
     return matchesSearch && matchesType && matchesCategory && matchesStatus;
   });
 
-  const categories = [...new Set(transactions.map(t => t.category))];
+  const categories = Array.from(new Set(transactions.map(t => t.category)));
   
   const totalIncome = filteredTransactions
     .filter(t => t.type === 'income' && t.amount !== null)
