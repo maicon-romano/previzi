@@ -1,0 +1,64 @@
+Corrija e melhore a funcionalidade de exclusão de transações recorrentes no sistema Previzi.
+
+---
+
+🟢 PARTE 1: MELHORIA VISUAL DO MODAL DE EXCLUSÃO
+
+O modal atual (SweetAlert2 ou outro) para exclusão de transações está simples e visualmente pobre.
+
+✅ Ajustes esperados:
+
+- Design mais moderno, com:
+  - Fundo com leve sombra
+  - Texto centralizado e com tipografia legível
+  - Botões com cores claras (ex: vermelho para excluir todas, cinza ou azul para excluir só uma)
+  - Ícones de alerta (ex: triângulo com exclamação ou lixeira)
+  - Espaçamento adequado entre os botões
+  - Animação de entrada (ex: fade ou slide up)
+- Exemplo de título:
+  - **"Excluir Transação Recorrente"**
+- Texto de apoio:
+  - **"Deseja excluir apenas esta ocorrência ou todas as próximas a partir deste mês?"**
+- Botões:
+  - ✅ Excluir apenas esta
+  - ✅ Excluir todas as próximas
+  - ✅ Cancelar
+
+---
+
+🟢 PARTE 2: AJUSTE NA QUERY DE EXCLUSÃO DE TODAS AS FUTURAS RECORRÊNCIAS
+
+Problema atual:  
+Ao escolher a opção de excluir todas as futuras, o sistema gera o seguinte erro:
+
+> FirebaseError: The query requires an index.
+
+✅ Ações necessárias:
+
+- Copiar o link de criação de índice que o Firestore forneceu no erro
+- Criar o índice composto sugerido (campos como: `recurring`, `source`, `type`, `date`, etc.)
+- Após criação do índice, testar a exclusão novamente
+
+---
+
+🟢 PARTE 3: MELHORIAS FUTURAS (RECOMENDADO)
+
+Para evitar criar muitos índices Firestore, sugiro adicionar um campo chamado:
+
+```json
+"recurrenceGroupId": "salario-maicon-2025-06"
+
+Esse campo deve ser adicionado no momento da criação da primeira transação recorrente.
+
+Benefício:
+Permite que futuras exclusões em massa sejam feitas com apenas dois filtros: 
+where("recurrenceGroupId", "==", targetId)
+where("date", ">=", currentTransactionDate)
+
+🟢 PARTE 4: ATUALIZAÇÃO EM TEMPO REAL
+
+Após a exclusão (seja de uma ou de todas as ocorrências):
+
+* A tabela de transações deve se atualizar automaticamente na tela
+* Não deve exigir reload manual
+* Se possível, adicionar uma pequena animação de fade-out nas linhas excluídas 

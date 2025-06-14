@@ -142,24 +142,46 @@ export default function TransactionsMonthly() {
       return;
     }
 
-    // Para transações recorrentes, mostrar opções
+    // Para transações recorrentes, mostrar opções com design melhorado
     const result = await Swal.fire({
-      title: 'Excluir Transação Recorrente',
-      text: 'Esta é uma transação recorrente. Como deseja proceder?',
-      icon: 'question',
+      title: '<strong>Excluir Transação Recorrente</strong>',
+      html: `
+        <div style="margin: 20px 0; color: #374151; font-size: 16px; line-height: 1.5;">
+          <div style="display: flex; justify-content: center; margin-bottom: 16px;">
+            <svg width="48" height="48" fill="#EF4444" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <p><strong>Deseja excluir apenas esta ocorrência ou todas as próximas a partir deste mês?</strong></p>
+          <div style="margin-top: 12px; padding: 12px; background: #FEF3C7; border-radius: 8px; border-left: 4px solid #F59E0B;">
+            <small style="color: #92400E;">💡 Esta ação não pode ser desfeita</small>
+          </div>
+        </div>
+      `,
       showCancelButton: true,
       showDenyButton: true,
-      confirmButtonText: 'Excluir apenas esta ocorrência',
-      denyButtonText: 'Excluir todas as futuras',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#f59e0b',
-      denyButtonColor: '#ef4444',
-      cancelButtonColor: '#6b7280',
+      confirmButtonText: '📅 Excluir apenas esta',
+      denyButtonText: '🗑️ Excluir todas as próximas',
+      cancelButtonText: '❌ Cancelar',
+      confirmButtonColor: '#3B82F6',
+      denyButtonColor: '#EF4444',
+      cancelButtonColor: '#6B7280',
+      background: '#FFFFFF',
+      backdrop: 'rgba(0,0,0,0.4)',
+      showClass: {
+        popup: 'animate__animated animate__fadeInUp animate__faster'
+      },
+      hideClass: {
+        popup: 'animate__animated animate__fadeOutDown animate__faster'
+      },
       customClass: {
-        actions: 'flex-col gap-2 w-full',
-        confirmButton: 'w-full',
-        denyButton: 'w-full',
-        cancelButton: 'w-full'
+        popup: 'rounded-xl shadow-2xl border-0',
+        title: 'text-xl font-bold text-gray-800 mb-4',
+        htmlContainer: 'text-gray-600',
+        confirmButton: 'mx-2 px-6 py-3 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105',
+        denyButton: 'mx-2 px-6 py-3 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105',
+        cancelButton: 'mx-2 px-6 py-3 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105',
+        actions: 'flex-wrap gap-3 justify-center mt-6'
       }
     });
 

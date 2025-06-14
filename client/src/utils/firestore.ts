@@ -55,6 +55,14 @@ export const addTransaction = async (userId: string, transaction: Omit<Transacti
     createdAt: Timestamp.fromDate(new Date()),
   };
 
+  // Gerar recurrenceGroupId para transações recorrentes
+  if (transaction.recurring) {
+    const timestamp = Date.now();
+    const sanitizedDescription = transaction.description.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const dateStr = transaction.date.getFullYear() + '-' + String(transaction.date.getMonth() + 1).padStart(2, '0');
+    transactionData.recurrenceGroupId = `${sanitizedDescription}-${dateStr}-${timestamp}`;
+  }
+
   // Adicionar campos opcionais apenas se tiverem valores definidos
   if (transaction.recurringType !== undefined) {
     transactionData.recurringType = transaction.recurringType;
@@ -88,6 +96,14 @@ export const addTransaction = async (userId: string, transaction: Omit<Transacti
 
 // Função para gerar transações recorrentes automaticamente
 const generateRecurringTransactions = async (userId: string, originalTransaction: Omit<TransactionType, "id" | "userId" | "createdAt">) => {
+  // Gerar recurrenceGroupId se não existir
+  let recurrenceGroupId = originalTransaction.recurrenceGroupId;
+  if (!recurrenceGroupId) {
+    const timestamp = Date.now();
+    const sanitizedDescription = originalTransaction.description.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const dateStr = originalTransaction.date.getFullYear() + '-' + String(originalTransaction.date.getMonth() + 1).padStart(2, '0');
+    recurrenceGroupId = `${sanitizedDescription}-${dateStr}-${timestamp}`;
+  }
   const originalDate = new Date(originalTransaction.date);
   let monthsToGenerate = 12; // Padrão para recorrência infinita
   
@@ -131,6 +147,7 @@ const generateRecurringTransactions = async (userId: string, originalTransaction
       status: 'pending' as const, // Todas as futuras começam como pendentes
       recurring: originalTransaction.recurring,
       isVariableAmount: originalTransaction.isVariableAmount || false,
+      recurrenceGroupId: recurrenceGroupId, // Usar o mesmo ID para todas as transações da série
       userId,
       createdAt: Timestamp.fromDate(new Date()),
     };

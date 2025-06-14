@@ -12,6 +12,7 @@ export interface TransactionType {
   recurringType?: "infinite" | "fixed"; // Tipo de recorrência
   recurringMonths?: number; // Quantidade de meses para recorrência fixa
   recurringEndDate?: string; // Data de término para recorrência fixa
+  recurrenceGroupId?: string; // ID único para agrupar transações recorrentes
   userId: string;
   createdAt: Date;
 }
