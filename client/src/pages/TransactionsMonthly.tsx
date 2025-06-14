@@ -157,7 +157,7 @@ export default function TransactionsMonthly() {
               <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
             </svg>
           </div>
-          <p><strong>Deseja excluir apenas esta ocorrência ou todas as próximas a partir deste mês?</strong></p>
+          <p><strong>Escolha como deseja excluir esta transação recorrente:</strong></p>
           <div style="margin-top: 12px; padding: 12px; background: #FEF3C7; border-radius: 8px; border-left: 4px solid #F59E0B;">
             <small style="color: #92400E;">💡 Esta ação não pode ser desfeita</small>
           </div>
@@ -165,8 +165,8 @@ export default function TransactionsMonthly() {
       `,
       showCancelButton: true,
       showDenyButton: true,
-      confirmButtonText: '📅 Excluir apenas esta',
-      denyButtonText: '🗑️ Excluir todas as próximas',
+      confirmButtonText: '📅 Apenas esta ocorrência',
+      denyButtonText: '🗑️ Todas as instâncias da série',
       cancelButtonText: '❌ Cancelar',
       confirmButtonColor: '#3B82F6',
       denyButtonColor: '#EF4444',
@@ -204,16 +204,16 @@ export default function TransactionsMonthly() {
         });
       }
     } else if (result.isDenied) {
-      // Excluir todas as futuras ocorrências
+      // Excluir TODAS as instâncias da série (passadas, presentes e futuras)
       try {
-        const deletedCount = await deleteRecurringTransactionWithOptions(currentUser.uid, transaction, "all_future");
-        toast.success("Todas as futuras ocorrências foram excluídas", {
-          description: `${deletedCount} transação(ões) excluída(s) com sucesso.`
+        const deletedCount = await deleteRecurringTransactionWithOptions(currentUser.uid, transaction, "all_instances");
+        toast.success("Toda a série de transações foi excluída", {
+          description: `${deletedCount} transação(ões) da série excluída(s) com sucesso.`
         });
       } catch (error) {
-        console.error('Erro ao excluir transações:', error);
-        toast.error("Erro ao excluir", {
-          description: "Não foi possível excluir as transações."
+        console.error('Erro ao excluir série de transações:', error);
+        toast.error("Erro ao excluir série", {
+          description: "Não foi possível excluir todas as instâncias da série."
         });
       }
     }

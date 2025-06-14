@@ -530,12 +530,46 @@ export const subscribeToTransactions = (
 export const deleteRecurringTransactionWithOptions = async (
   userId: string, 
   transaction: TransactionType, 
-  deleteOption: "current" | "all_future"
+  deleteOption: "current" | "all_future" | "all_instances"
 ) => {
   if (deleteOption === "current") {
     // Excluir apenas a transação atual
     await deleteTransaction(userId, transaction.id);
     return 1; // Uma transação excluída
+  } else if (deleteOption === "all_instances") {
+    // Excluir TODAS as instâncias da série (passadas, presentes e futuras)
+    if (transaction.recurrenceGroupId) {
+      const q = query(
+        collection(db, "users", userId, "transactions"),
+        where("recurrenceGroupId", "==", transaction.recurrenceGroupId)
+      );
+
+      const querySnapshot = await getDocs(q);
+      
+      // Deletar todas as instâncias da série
+      const deletePromises = querySnapshot.docs.map(docSnapshot => deleteDoc(docSnapshot.ref));
+      await Promise.all(deletePromises);
+      
+      console.log(`🗑️ ${querySnapshot.docs.length} transações da série completa deletadas via recurrenceGroupId`);
+      return querySnapshot.docs.length;
+    } else {
+      // Fallback para transações sem recurrenceGroupId - buscar por características similares
+      const q = query(
+        collection(db, "users", userId, "transactions"),
+        where("description", "==", transaction.description),
+        where("category", "==", transaction.category),
+        where("recurring", "==", true)
+      );
+
+      const querySnapshot = await getDocs(q);
+      
+      // Deletar todas as transações similares
+      const deletePromises = querySnapshot.docs.map(docSnapshot => deleteDoc(docSnapshot.ref));
+      await Promise.all(deletePromises);
+      
+      console.log(`🗑️ ${querySnapshot.docs.length} transações similares deletadas via fallback`);
+      return querySnapshot.docs.length;
+    }
   } else {
     // Para exclusão de todas as futuras, usar recurrenceGroupId se disponível
     if (transaction.recurrenceGroupId) {
@@ -827,9 +861,10 @@ export const checkAndGenerateInfiniteRecurringTransactions = async (
       
       console.log(`🔍 Verificando ${originalTransaction.description}: original=${originalDate.toLocaleDateString('pt-BR')}, target=${targetDate.toLocaleDateString('pt-BR')}`);
       
-      // Só gerar se o mês target for posterior ao mês original
-      if (targetDate > originalDate) {
-        console.log(`✅ Precisa gerar para ${originalTransaction.description}`);
+      // CRÍTICO: Só gerar se o mês target for maior OU IGUAL ao mês original
+      // Isso impede que transações apareçam em meses anteriores à data original
+      if (targetDate >= originalDate) {
+        console.log(`✅ Precisa gerar para ${originalTransaction.description} (target >= original)`);
         
         const generatedId = await generateInfiniteRecurringTransactionForMonth(
           userId,
@@ -843,7 +878,7 @@ export const checkAndGenerateInfiniteRecurringTransactions = async (
           console.log(`🎉 Gerada transação recorrente: ${originalTransaction.description} para ${year}-${month}`);
         }
       } else {
-        console.log(`⏭️ Mês target não é posterior ao original para ${originalTransaction.description}`);
+        console.log(`⏭️ Mês target é anterior ao original para ${originalTransaction.description} - BLOQUEADO`);
       }
     }
     

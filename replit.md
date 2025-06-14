@@ -107,16 +107,17 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 ### June 14, 2025
-- **Final Fix: Infinite Recurring Transaction System**: Implemented true on-demand infinite recurrence
-  - Only original transaction saved for infinite recurring types - no bulk generation
-  - Dynamic generation triggered every time user opens a new month via `subscribeToMonthlyTransactions`
-  - Enhanced `checkAndGenerateInfiniteRecurringTransactions` with comprehensive logging
-  - Robust series detection using `recurrenceGroupId` and fallback methods
-  - Improved duplicate detection prevents multiple creation of same month instance
-  - Proper date calculation handles edge cases (February 29th, month-end scenarios)
-  - System generates transactions for unlimited future years (2027, 2028, 2030+)
-  - Integrated into both `getTransactionsByMonth` and real-time subscription listeners
-  - Comprehensive debugging logs track generation process and success rates
+- **Critical Fixes for Infinite Recurring Transaction System**: Resolved date validation and deletion issues
+  - Fixed date validation: infinite transactions only appear from their original month forward
+  - Prevented transactions from showing in months prior to their creation date
+  - Enhanced deletion system with complete series removal option
+  - Added "delete all instances" functionality for entire recurring series
+  - Improved modal with clear options: single occurrence vs entire series deletion
+  - Implemented batch deletion using `recurrenceGroupId` for optimal performance
+  - Added fallback deletion logic for transactions without `recurrenceGroupId`
+  - Dynamic generation triggers only for valid future months (>= original date)
+  - Comprehensive logging tracks generation and deletion operations
+  - System maintains data integrity across all temporal operations
 
 - **Fixed AddTransactionModal Form Reset Issue**: Implemented automatic form clearing when modal opens
   - Added useEffect to automatically reset all form fields when modal opens
