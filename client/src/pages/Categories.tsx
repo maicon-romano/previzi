@@ -279,7 +279,11 @@ export default function Categories() {
                     <span className="font-medium text-gray-900">{category.name}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEditCategory(category)}
+                    >
                       <i className="fas fa-edit mr-1"></i>
                       Editar
                     </Button>
@@ -340,7 +344,11 @@ export default function Categories() {
                     <span className="font-medium text-gray-900">{category.name}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEditCategory(category)}
+                    >
                       <i className="fas fa-edit mr-1"></i>
                       Editar
                     </Button>
@@ -366,6 +374,56 @@ export default function Categories() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Category Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Categoria</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-category-name">Nome da categoria</Label>
+              <Input
+                id="edit-category-name"
+                value={editCategoryName}
+                onChange={(e) => setEditCategoryName(e.target.value)}
+                placeholder="Ex: Salário, Freelance..."
+              />
+            </div>
+            <div className="space-y-3">
+              <Label>Tipo</Label>
+              <RadioGroup
+                value={editCategoryType}
+                onValueChange={(value) => setEditCategoryType(value as "income" | "expense")}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="income" id="edit-income" />
+                  <Label htmlFor="edit-income">Receita</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="expense" id="edit-expense" />
+                  <Label htmlFor="edit-expense">Despesa</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsEditModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleUpdateCategory}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
