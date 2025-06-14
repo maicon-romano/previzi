@@ -22,10 +22,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { ChevronLeft, ChevronRight, Calendar, Filter } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Filter, Edit, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { getTransactionsByMonth, updateTransaction, deleteTransaction, subscribeToTransactions } from "../utils/firestore";
 import { useToast } from "@/hooks/use-toast";
+import EditTransactionModal from "../components/EditTransactionModal";
 import Swal from "sweetalert2";
 
 export default function Transactions() {
@@ -41,6 +42,8 @@ export default function Transactions() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [editingTransaction, setEditingTransaction] = useState<TransactionType | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const monthNames = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -83,6 +86,11 @@ export default function Transactions() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleEditTransaction = (transaction: TransactionType) => {
+    setEditingTransaction(transaction);
+    setIsEditModalOpen(true);
   };
 
   const handleStatusToggle = async (transactionId: string, currentStatus: string) => {
@@ -588,8 +596,13 @@ export default function Transactions() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end space-x-2">
-                          <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
-                            <i className="fas fa-edit"></i>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-blue-600 hover:text-blue-700"
+                            onClick={() => handleEditTransaction(transaction)}
+                          >
+                            <Edit className="h-4 w-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
@@ -597,7 +610,7 @@ export default function Transactions() {
                             className="text-red-600 hover:text-red-700"
                             onClick={() => handleDelete(transaction.id, transaction.description)}
                           >
-                            <i className="fas fa-trash"></i>
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -637,6 +650,16 @@ export default function Transactions() {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de edição de transações */}
+      <EditTransactionModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingTransaction(null);
+        }}
+        transaction={editingTransaction}
+      />
     </motion.div>
   );
 }
