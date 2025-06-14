@@ -22,11 +22,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { ChevronLeft, ChevronRight, Calendar, Filter, Search, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Filter, Search, Plus, Trash2, Edit } from "lucide-react";
 import { motion } from "framer-motion";
 import { getTransactionsByMonth, updateTransaction, deleteTransaction, parseMonthString, subscribeToMonthlyTransactions, deleteRecurringTransactionWithOptions } from "../utils/firestore";
 import { toast } from "sonner";
 import AddTransactionModal from "../components/AddTransactionModal";
+import EditTransactionModal from "../components/EditTransactionModal";
 import Swal from "sweetalert2";
 
 export default function TransactionsMonthly() {
@@ -42,6 +43,8 @@ export default function TransactionsMonthly() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<TransactionType | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const monthNames = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -85,6 +88,11 @@ export default function TransactionsMonthly() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleEditTransaction = (transaction: TransactionType) => {
+    setEditingTransaction(transaction);
+    setIsEditModalOpen(true);
   };
 
   const handleStatusToggle = async (transactionId: string, currentStatus: string) => {
@@ -510,10 +518,20 @@ export default function TransactionsMonthly() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteTransaction(transaction)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleEditTransaction(transaction)}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors duration-200"
+                            title="Editar transação"
                           >
-                            Excluir
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteTransaction(transaction)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors duration-200"
+                            title="Excluir transação"
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -531,6 +549,16 @@ export default function TransactionsMonthly() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onTransactionAdded={loadTransactions}
+      />
+
+      {/* Modal de edição de transação */}
+      <EditTransactionModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingTransaction(null);
+        }}
+        transaction={editingTransaction}
       />
     </div>
   );
