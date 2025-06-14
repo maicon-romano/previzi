@@ -302,11 +302,16 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {defaultCategories[watchType].map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
+                      {categories
+                        .filter((cat) => cat.type === watchType)
+                        .map((category) => (
+                          <SelectItem key={category.id} value={category.name}>
+                            <div className="flex items-center">
+                              <i className={`${category.icon || 'fas fa-tag'} mr-2`}></i>
+                              {category.name}
+                            </div>
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -333,10 +338,24 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
               name="source"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Origem (opcional)</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Origem da transação" />
-                  </FormControl>
+                  <FormLabel>Origem</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a origem" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {sources.map((source) => (
+                        <SelectItem key={source.id} value={source.name}>
+                          <div className="flex items-center">
+                            <i className="fas fa-user mr-2"></i>
+                            {source.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
