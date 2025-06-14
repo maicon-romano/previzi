@@ -73,6 +73,12 @@ export default function Categories() {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Filter icons based on category type
+  const getFilteredIcons = (type: "income" | "expense") => {
+    return availableIcons.filter(icon => icon.category === type || icon.category === "both");
+  };
+
+  // Category handlers
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) {
       toast({
@@ -88,7 +94,7 @@ export default function Categories() {
       await addCategory({
         name: newCategoryName.trim(),
         type: newCategoryType,
-        icon: categoryIcons[newCategoryName as keyof typeof categoryIcons] || "fas fa-tag",
+        icon: newCategoryIcon || "fas fa-tag",
       });
 
       toast({
@@ -98,7 +104,8 @@ export default function Categories() {
 
       setNewCategoryName("");
       setNewCategoryType("income");
-      setIsAddModalOpen(false);
+      setNewCategoryIcon("");
+      setIsAddCategoryModalOpen(false);
     } catch (error) {
       toast({
         title: "Erro",
@@ -114,7 +121,8 @@ export default function Categories() {
     setEditingCategory(category);
     setEditCategoryName(category.name);
     setEditCategoryType(category.type);
-    setIsEditModalOpen(true);
+    setEditCategoryIcon(category.icon || "");
+    setIsEditCategoryModalOpen(true);
   };
 
   const handleUpdateCategory = async () => {
@@ -132,7 +140,7 @@ export default function Categories() {
       await updateCategory(editingCategory.id, {
         name: editCategoryName.trim(),
         type: editCategoryType,
-        icon: categoryIcons[editCategoryName as keyof typeof categoryIcons] || "fas fa-tag",
+        icon: editCategoryIcon || "fas fa-tag",
       });
 
       toast({
@@ -140,10 +148,11 @@ export default function Categories() {
         description: "A categoria foi atualizada com sucesso.",
       });
 
-      setIsEditModalOpen(false);
+      setIsEditCategoryModalOpen(false);
       setEditingCategory(null);
       setEditCategoryName("");
       setEditCategoryType("income");
+      setEditCategoryIcon("");
     } catch (error) {
       toast({
         title: "Erro",
@@ -171,6 +180,7 @@ export default function Categories() {
     if (result.isConfirmed) {
       try {
         await deleteCategory(categoryId);
+        
         toast({
           title: "Categoria excluída",
           description: "A categoria foi excluída com sucesso.",
@@ -200,210 +210,426 @@ export default function Categories() {
     }
   };
 
-  if (isLoading) {
+  // Source handlers
+  const handleAddSource = async () => {
+    if (!newSourceName.trim()) {
+      toast({
+        title: "Erro",
+        description: "Nome da origem é obrigatório.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await addSource({
+        name: newSourceName.trim(),
+      });
+
+      toast({
+        title: "Origem adicionada",
+        description: "A origem foi adicionada com sucesso.",
+      });
+
+      setNewSourceName("");
+      setIsAddSourceModalOpen(false);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível adicionar a origem. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditSource = (source: SourceType) => {
+    setEditingSource(source);
+    setEditSourceName(source.name);
+    setIsEditSourceModalOpen(true);
+  };
+
+  const handleUpdateSource = async () => {
+    if (!editingSource || !editSourceName.trim()) {
+      toast({
+        title: "Erro",
+        description: "Nome da origem é obrigatório.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await updateSource(editingSource.id, {
+        name: editSourceName.trim(),
+      });
+
+      toast({
+        title: "Origem atualizada",
+        description: "A origem foi atualizada com sucesso.",
+      });
+
+      setIsEditSourceModalOpen(false);
+      setEditingSource(null);
+      setEditSourceName("");
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a origem. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteSource = async (sourceId: string, sourceName: string) => {
+    const result = await Swal.fire({
+      title: 'Excluir Origem',
+      text: `Tem certeza que deseja excluir a origem "${sourceName}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sim, excluir',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await deleteSource(sourceId);
+        
+        toast({
+          title: "Origem excluída",
+          description: "A origem foi excluída com sucesso.",
+        });
+        
+        Swal.fire({
+          title: 'Excluída!',
+          text: 'A origem foi excluída com sucesso.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível excluir a origem. Tente novamente.",
+          variant: "destructive",
+        });
+        
+        Swal.fire({
+          title: 'Erro!',
+          text: 'Não foi possível excluir a origem.',
+          icon: 'error',
+          confirmButtonColor: '#ef4444'
+        });
+      }
+    }
+  };
+
+  // Filter categories by type
+  const incomeCategories = categories.filter((cat) => cat.type === "income");
+  const expenseCategories = categories.filter((cat) => cat.type === "expense");
+
+  if (categoriesLoading || sourcesLoading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {[...Array(2)].map((_, i) => (
-          <Card key={i}>
-            <CardHeader>
-              <Skeleton className="h-6 w-48" />
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {[...Array(4)].map((_, j) => (
-                  <Skeleton key={j} className="h-16 w-full" />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-96" />
+          <Skeleton className="h-96" />
+        </div>
       </div>
     );
   }
 
-  const incomeCategories = categories.filter(cat => cat.type === "income");
-  const expenseCategories = categories.filter(cat => cat.type === "expense");
-
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Income Categories */}
-      <Card>
-        <CardHeader className="border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Categorias de Receita</CardTitle>
-            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  className="bg-success-500 hover:bg-success-600 text-white"
-                  size="sm"
-                  onClick={() => setNewCategoryType("income")}
-                >
-                  <i className="fas fa-plus mr-1"></i>
-                  Adicionar
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Adicionar Nova Categoria</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="category-name">Nome da categoria</Label>
-                    <Input
-                      id="category-name"
-                      value={newCategoryName}
-                      onChange={(e) => setNewCategoryName(e.target.value)}
-                      placeholder="Ex: Salário, Freelance..."
-                    />
-                  </div>
+    <div className="space-y-6">
+      <Tabs defaultValue="categories" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="categories">Categorias</TabsTrigger>
+          <TabsTrigger value="sources">Origens</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="categories" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Income Categories */}
+            <Card>
+              <CardHeader className="border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Categorias de Receita</CardTitle>
+                  <Dialog open={isAddCategoryModalOpen} onOpenChange={setIsAddCategoryModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        className="bg-success-500 hover:bg-success-600 text-white"
+                        size="sm"
+                        onClick={() => setNewCategoryType("income")}
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Adicionar
+                      </Button>
+                    </DialogTrigger>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                {incomeCategories.length > 0 ? (
                   <div className="space-y-3">
-                    <Label>Tipo</Label>
-                    <RadioGroup
-                      value={newCategoryType}
-                      onValueChange={(value) => setNewCategoryType(value as "income" | "expense")}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="income" id="income" />
-                        <Label htmlFor="income">Receita</Label>
+                    {incomeCategories.map((category) => (
+                      <div
+                        key={category.id}
+                        className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+                      >
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 bg-success-100 rounded-full flex items-center justify-center mr-3">
+                            <i className={`${category.icon || 'fas fa-tag'} text-success-600`}></i>
+                          </div>
+                          <span className="font-medium text-gray-900">{category.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleEditCategory(category)}
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Editar
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => handleDeleteCategory(category.id, category.name)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Excluir
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="expense" id="expense" />
-                        <Label htmlFor="expense">Despesa</Label>
-                      </div>
-                    </RadioGroup>
+                    ))}
                   </div>
-                  <div className="flex justify-end space-x-3">
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsAddModalOpen(false)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      onClick={handleAddCategory}
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? "Adicionando..." : "Adicionar"}
-                    </Button>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Plus className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Nenhuma categoria de receita</h3>
+                    <p>Adicione categorias para organizar suas receitas</p>
                   </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent className="p-6">
-          {incomeCategories.length > 0 ? (
-            <div className="space-y-3">
-              {incomeCategories.map((category) => (
-                <div
-                  key={category.id}
-                  className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
-                >
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-success-100 rounded-full flex items-center justify-center mr-3">
-                      <i className={`${category.icon || 'fas fa-tag'} text-success-600`}></i>
-                    </div>
-                    <span className="font-medium text-gray-900">{category.name}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleEditCategory(category)}
-                    >
-                      <i className="fas fa-edit mr-1"></i>
-                      Editar
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700"
-                      onClick={() => handleDeleteCategory(category.id, category.name)}
-                    >
-                      <i className="fas fa-trash mr-1"></i>
-                      Excluir
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <i className="fas fa-plus-circle text-4xl mb-4"></i>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Nenhuma categoria de receita</h3>
-              <p>Adicione categorias para organizar suas receitas</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                )}
+              </CardContent>
+            </Card>
 
-      {/* Expense Categories */}
-      <Card>
-        <CardHeader className="border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Categorias de Despesa</CardTitle>
-            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  className="bg-danger-500 hover:bg-danger-600 text-white"
-                  size="sm"
-                  onClick={() => setNewCategoryType("expense")}
-                >
-                  <i className="fas fa-plus mr-1"></i>
-                  Adicionar
-                </Button>
-              </DialogTrigger>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent className="p-6">
-          {expenseCategories.length > 0 ? (
-            <div className="space-y-3">
-              {expenseCategories.map((category) => (
-                <div
-                  key={category.id}
-                  className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
-                >
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
-                      <i className={`${category.icon || 'fas fa-tag'} text-danger-600`}></i>
-                    </div>
-                    <span className="font-medium text-gray-900">{category.name}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleEditCategory(category)}
-                    >
-                      <i className="fas fa-edit mr-1"></i>
-                      Editar
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700"
-                      onClick={() => handleDeleteCategory(category.id, category.name)}
-                    >
-                      <i className="fas fa-trash mr-1"></i>
-                      Excluir
-                    </Button>
-                  </div>
+            {/* Expense Categories */}
+            <Card>
+              <CardHeader className="border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Categorias de Despesa</CardTitle>
+                  <Dialog open={isAddCategoryModalOpen} onOpenChange={setIsAddCategoryModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        className="bg-danger-500 hover:bg-danger-600 text-white"
+                        size="sm"
+                        onClick={() => setNewCategoryType("expense")}
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Adicionar
+                      </Button>
+                    </DialogTrigger>
+                  </Dialog>
                 </div>
-              ))}
+              </CardHeader>
+              <CardContent className="p-6">
+                {expenseCategories.length > 0 ? (
+                  <div className="space-y-3">
+                    {expenseCategories.map((category) => (
+                      <div
+                        key={category.id}
+                        className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+                      >
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                            <i className={`${category.icon || 'fas fa-tag'} text-danger-600`}></i>
+                          </div>
+                          <span className="font-medium text-gray-900">{category.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleEditCategory(category)}
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Editar
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => handleDeleteCategory(category.id, category.name)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Excluir
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Plus className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Nenhuma categoria de despesa</h3>
+                    <p>Adicione categorias para organizar suas despesas</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="sources" className="space-y-6">
+          <Card>
+            <CardHeader className="border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Origens de Recursos</CardTitle>
+                <Dialog open={isAddSourceModalOpen} onOpenChange={setIsAddSourceModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      className="bg-blue-500 hover:bg-blue-600 text-white"
+                      size="sm"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Adicionar
+                    </Button>
+                  </DialogTrigger>
+                </Dialog>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              {sources.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {sources.map((source) => (
+                    <div
+                      key={source.id}
+                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                    >
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                          <User className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <span className="font-medium text-gray-900">{source.name}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEditSource(source)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => handleDeleteSource(source.id, source.name)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Nenhuma origem cadastrada</h3>
+                  <p>Adicione origens para identificar de onde vem seu dinheiro</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Add Category Modal */}
+      <Dialog open={isAddCategoryModalOpen} onOpenChange={setIsAddCategoryModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar Nova Categoria</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="category-name">Nome da categoria</Label>
+              <Input
+                id="category-name"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="Ex: Salário, Freelance..."
+              />
             </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <i className="fas fa-plus-circle text-4xl mb-4"></i>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Nenhuma categoria de despesa</h3>
-              <p>Adicione categorias para organizar suas despesas</p>
+            <div className="space-y-3">
+              <Label>Tipo</Label>
+              <RadioGroup
+                value={newCategoryType}
+                onValueChange={(value) => setNewCategoryType(value as "income" | "expense")}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="income" id="income" />
+                  <Label htmlFor="income">Receita</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="expense" id="expense" />
+                  <Label htmlFor="expense">Despesa</Label>
+                </div>
+              </RadioGroup>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div className="space-y-2">
+              <Label htmlFor="category-icon">Ícone</Label>
+              <Select value={newCategoryIcon} onValueChange={setNewCategoryIcon}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Escolha um ícone">
+                    {newCategoryIcon && (
+                      <div className="flex items-center">
+                        <i className={`${newCategoryIcon} mr-2`}></i>
+                        {availableIcons.find(icon => icon.value === newCategoryIcon)?.label}
+                      </div>
+                    )}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {getFilteredIcons(newCategoryType).map((icon) => (
+                    <SelectItem key={icon.value} value={icon.value}>
+                      <div className="flex items-center">
+                        <i className={`${icon.value} mr-2`}></i>
+                        {icon.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsAddCategoryModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleAddCategory}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Adicionando..." : "Adicionar"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Category Modal */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+      <Dialog open={isEditCategoryModalOpen} onOpenChange={setIsEditCategoryModalOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Editar Categoria</DialogTitle>
@@ -434,15 +660,108 @@ export default function Categories() {
                 </div>
               </RadioGroup>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-category-icon">Ícone</Label>
+              <Select value={editCategoryIcon} onValueChange={setEditCategoryIcon}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Escolha um ícone">
+                    {editCategoryIcon && (
+                      <div className="flex items-center">
+                        <i className={`${editCategoryIcon} mr-2`}></i>
+                        {availableIcons.find(icon => icon.value === editCategoryIcon)?.label}
+                      </div>
+                    )}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {getFilteredIcons(editCategoryType).map((icon) => (
+                    <SelectItem key={icon.value} value={icon.value}>
+                      <div className="flex items-center">
+                        <i className={`${icon.value} mr-2`}></i>
+                        {icon.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex justify-end space-x-3">
               <Button
                 variant="outline"
-                onClick={() => setIsEditModalOpen(false)}
+                onClick={() => setIsEditCategoryModalOpen(false)}
               >
                 Cancelar
               </Button>
               <Button
                 onClick={handleUpdateCategory}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Source Modal */}
+      <Dialog open={isAddSourceModalOpen} onOpenChange={setIsAddSourceModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar Nova Origem</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="source-name">Nome da origem</Label>
+              <Input
+                id="source-name"
+                value={newSourceName}
+                onChange={(e) => setNewSourceName(e.target.value)}
+                placeholder="Ex: Maicon, Gabi, Conjunto..."
+              />
+            </div>
+            <div className="flex justify-end space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsAddSourceModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleAddSource}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Adicionando..." : "Adicionar"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Source Modal */}
+      <Dialog open={isEditSourceModalOpen} onOpenChange={setIsEditSourceModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Origem</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-source-name">Nome da origem</Label>
+              <Input
+                id="edit-source-name"
+                value={editSourceName}
+                onChange={(e) => setEditSourceName(e.target.value)}
+                placeholder="Ex: Maicon, Gabi, Conjunto..."
+              />
+            </div>
+            <div className="flex justify-end space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsEditSourceModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleUpdateSource}
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Salvando..." : "Salvar"}

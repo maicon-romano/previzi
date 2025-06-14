@@ -3,6 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "../contexts/AuthContext";
+import { useCategories } from "../hooks/useCategories";
+import { useSources } from "../hooks/useSources";
 import { addTransaction } from "../utils/firestore";
 import { Button } from "@/components/ui/button";
 import {
@@ -94,13 +96,10 @@ const transactionSchema = z.object({
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
 
-const defaultCategories = {
-  income: ["Salário", "Freelance", "Investimentos", "Outros"],
-  expense: ["Moradia", "Alimentação", "Transporte", "Lazer", "Saúde", "Educação", "Outros"],
-};
-
 export default function AddTransactionModal({ isOpen, onClose, onTransactionAdded }: AddTransactionModalProps) {
   const { currentUser } = useAuth();
+  const { categories } = useCategories();
+  const { sources } = useSources();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<TransactionFormData>({
