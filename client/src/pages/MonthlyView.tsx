@@ -107,6 +107,88 @@ export default function MonthlyView() {
     setEditingTransaction(null);
   };
 
+  const handleDeleteTransaction = async (transaction: TransactionType) => {
+    if (!currentUser) return;
+
+    // Se não for transação recorrente, excluir normalmente
+    if (!transaction.recurring) {
+      const result = await Swal.fire({
+        title: 'Excluir Transação',
+        text: 'Tem certeza que deseja excluir esta transação?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Sim, excluir',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (result.isConfirmed) {
+        try {
+          await deleteRecurringTransactionWithOptions(currentUser.uid, transaction, "current");
+          toast.success("Transação excluída", {
+            description: "A transação foi excluída com sucesso."
+          });
+        } catch (error) {
+          console.error('Erro ao excluir transação:', error);
+          toast.error("Erro ao excluir", {
+            description: "Não foi possível excluir a transação."
+          });
+        }
+      }
+      return;
+    }
+
+    // Para transações recorrentes, mostrar opções
+    const result = await Swal.fire({
+      title: 'Excluir Transação Recorrente',
+      text: 'Esta é uma transação recorrente. Como deseja proceder?',
+      icon: 'question',
+      showCancelButton: true,
+      showDenyButton: true,
+      confirmButtonText: 'Excluir apenas esta ocorrência',
+      denyButtonText: 'Excluir todas as futuras',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#f59e0b',
+      denyButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      customClass: {
+        actions: 'flex-col gap-2 w-full',
+        confirmButton: 'w-full',
+        denyButton: 'w-full',
+        cancelButton: 'w-full'
+      }
+    });
+
+    if (result.isConfirmed) {
+      // Excluir apenas esta ocorrência
+      try {
+        await deleteRecurringTransactionWithOptions(currentUser.uid, transaction, "current");
+        toast.success("Transação excluída deste mês", {
+          description: "Apenas esta ocorrência foi excluída."
+        });
+      } catch (error) {
+        console.error('Erro ao excluir transação:', error);
+        toast.error("Erro ao excluir", {
+          description: "Não foi possível excluir a transação."
+        });
+      }
+    } else if (result.isDenied) {
+      // Excluir todas as futuras ocorrências
+      try {
+        const deletedCount = await deleteRecurringTransactionWithOptions(currentUser.uid, transaction, "all_future");
+        toast.success("Todas as futuras ocorrências foram excluídas", {
+          description: `${deletedCount} transação(ões) excluída(s) com sucesso.`
+        });
+      } catch (error) {
+        console.error('Erro ao excluir transações:', error);
+        toast.error("Erro ao excluir", {
+          description: "Não foi possível excluir as transações."
+        });
+      }
+    }
+  };
+
   const totalIncome = transactions
     .filter(t => t.type === 'income' && t.amount !== null)
     .reduce((sum, t) => sum + (t.amount || 0), 0);
@@ -257,7 +339,7 @@ export default function MonthlyView() {
                       )}
                     </span>
                     
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <span className="text-sm text-gray-600">
                         {transaction.status === 'paid' ? 'Pago' : 'Pendente'}
                       </span>
@@ -266,6 +348,16 @@ export default function MonthlyView() {
                         onCheckedChange={() => handleStatusToggle(transaction)}
                         className="data-[state=checked]:bg-green-500"
                       />
+                      
+                      {/* Botão de exclusão */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteTransaction(transaction)}
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </motion.div>

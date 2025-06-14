@@ -22,16 +22,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { ChevronLeft, ChevronRight, Calendar, Filter, Search, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Filter, Search, Plus, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { getTransactionsByMonth, updateTransaction, deleteTransaction, parseMonthString, subscribeToMonthlyTransactions } from "../utils/firestore";
-import { useToast } from "@/hooks/use-toast";
+import { getTransactionsByMonth, updateTransaction, deleteTransaction, parseMonthString, subscribeToMonthlyTransactions, deleteRecurringTransactionWithOptions } from "../utils/firestore";
+import { toast } from "sonner";
 import AddTransactionModal from "../components/AddTransactionModal";
 import Swal from "sweetalert2";
 
 export default function TransactionsMonthly() {
   const { currentUser } = useAuth();
-  const { toast } = useToast();
   const [transactions, setTransactions] = useState<TransactionType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -116,34 +115,83 @@ export default function TransactionsMonthly() {
     }
   };
 
-  const handleDeleteTransaction = async (transactionId: string) => {
+  const handleDeleteTransaction = async (transaction: TransactionType) => {
     if (!currentUser) return;
 
+    // Se não for transação recorrente, excluir normalmente
+    if (!transaction.recurring) {
+      const result = await Swal.fire({
+        title: 'Excluir Transação',
+        text: 'Tem certeza que deseja excluir esta transação?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Sim, excluir',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (result.isConfirmed) {
+        try {
+          await deleteRecurringTransactionWithOptions(currentUser.uid, transaction, "current");
+          toast.success("Transação excluída", {
+            description: "A transação foi excluída com sucesso."
+          });
+        } catch (error) {
+          console.error('Erro ao excluir transação:', error);
+          toast.error("Erro ao excluir", {
+            description: "Não foi possível excluir a transação."
+          });
+        }
+      }
+      return;
+    }
+
+    // Para transações recorrentes, mostrar opções
     const result = await Swal.fire({
-      title: 'Confirmar exclusão',
-      text: 'Tem certeza que deseja excluir esta transação?',
-      icon: 'warning',
+      title: 'Excluir Transação Recorrente',
+      text: 'Esta é uma transação recorrente. Como deseja proceder?',
+      icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Sim, excluir',
-      cancelButtonText: 'Cancelar'
+      showDenyButton: true,
+      confirmButtonText: 'Excluir apenas esta ocorrência',
+      denyButtonText: 'Excluir todas as futuras',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#f59e0b',
+      denyButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      customClass: {
+        actions: 'flex-col gap-2 w-full',
+        confirmButton: 'w-full',
+        denyButton: 'w-full',
+        cancelButton: 'w-full'
+      }
     });
 
     if (result.isConfirmed) {
+      // Excluir apenas esta ocorrência
       try {
-        await deleteTransaction(currentUser.uid, transactionId);
-        setTransactions(prev => prev.filter(t => t.id !== transactionId));
-        
-        toast({
-          title: "Transação excluída",
-          description: "A transação foi excluída com sucesso.",
+        await deleteRecurringTransactionWithOptions(currentUser.uid, transaction, "current");
+        toast.success("Transação excluída deste mês", {
+          description: "Apenas esta ocorrência foi excluída."
         });
       } catch (error) {
-        toast({
-          title: "Erro",
-          description: "Não foi possível excluir a transação.",
-          variant: "destructive",
+        console.error('Erro ao excluir transação:', error);
+        toast.error("Erro ao excluir", {
+          description: "Não foi possível excluir a transação."
+        });
+      }
+    } else if (result.isDenied) {
+      // Excluir todas as futuras ocorrências
+      try {
+        const deletedCount = await deleteRecurringTransactionWithOptions(currentUser.uid, transaction, "all_future");
+        toast.success("Todas as futuras ocorrências foram excluídas", {
+          description: `${deletedCount} transação(ões) excluída(s) com sucesso.`
+        });
+      } catch (error) {
+        console.error('Erro ao excluir transações:', error);
+        toast.error("Erro ao excluir", {
+          description: "Não foi possível excluir as transações."
         });
       }
     }
