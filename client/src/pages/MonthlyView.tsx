@@ -23,6 +23,7 @@ export default function MonthlyView() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingTransaction, setEditingTransaction] = useState<TransactionType | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [deletingTransactionId, setDeletingTransactionId] = useState<string | null>(null);
 
   const monthNames = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -185,12 +186,24 @@ export default function MonthlyView() {
     if (result.isConfirmed) {
       // Excluir apenas esta ocorrência
       try {
-        await deleteRecurringTransactionWithOptions(currentUser.uid, transaction, "current");
-        toast.success("Transação excluída deste mês", {
-          description: "Apenas esta ocorrência foi excluída."
-        });
+        setDeletingTransactionId(transaction.id);
+        
+        // Aguardar um pouco para mostrar a animação
+        setTimeout(async () => {
+          await deleteRecurringTransactionWithOptions(currentUser.uid, transaction, "current");
+          
+          // Atualizar estado local removendo a transação
+          setTransactions(prev => prev.filter(t => t.id !== transaction.id));
+          setDeletingTransactionId(null);
+          
+          toast.success("Transação excluída deste mês", {
+            description: "Apenas esta ocorrência foi excluída."
+          });
+        }, 300);
+        
       } catch (error) {
         console.error('Erro ao excluir transação:', error);
+        setDeletingTransactionId(null);
         toast.error("Erro ao excluir", {
           description: "Não foi possível excluir a transação."
         });
@@ -198,12 +211,23 @@ export default function MonthlyView() {
     } else if (result.isDenied) {
       // Excluir todas as futuras ocorrências
       try {
-        const deletedCount = await deleteRecurringTransactionWithOptions(currentUser.uid, transaction, "all_future");
-        toast.success("Todas as futuras ocorrências foram excluídas", {
-          description: `${deletedCount} transação(ões) excluída(s) com sucesso.`
-        });
+        setDeletingTransactionId(transaction.id);
+        
+        setTimeout(async () => {
+          const deletedCount = await deleteRecurringTransactionWithOptions(currentUser.uid, transaction, "all_future");
+          
+          // Recarregar transações para refletir todas as exclusões
+          loadTransactions();
+          setDeletingTransactionId(null);
+          
+          toast.success("Todas as futuras ocorrências foram excluídas", {
+            description: `${deletedCount} transação(ões) excluída(s) com sucesso.`
+          });
+        }, 300);
+        
       } catch (error) {
         console.error('Erro ao excluir transações:', error);
+        setDeletingTransactionId(null);
         toast.error("Erro ao excluir", {
           description: "Não foi possível excluir as transações."
         });
@@ -325,9 +349,21 @@ export default function MonthlyView() {
                 <motion.div
                   key={transaction.id}
                   initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  animate={{ 
+                    opacity: deletingTransactionId === transaction.id ? 0 : 1, 
+                    y: 0,
+                    scale: deletingTransactionId === transaction.id ? 0.95 : 1
+                  }}
+                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                  transition={{ 
+                    delay: deletingTransactionId === transaction.id ? 0 : index * 0.1,
+                    duration: deletingTransactionId === transaction.id ? 0.3 : 0.2
+                  }}
+                  className={`flex items-center justify-between p-4 rounded-lg transition-all duration-300 ${
+                    deletingTransactionId === transaction.id 
+                      ? 'bg-red-50 border-2 border-red-200' 
+                      : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">

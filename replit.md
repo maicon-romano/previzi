@@ -106,6 +106,23 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### June 14, 2025
+- **Enhanced Recurring Transaction Deletion System**: Implemented granular control for deleting recurring transactions
+  - Modern SweetAlert2 modal with improved visual design, icons, and animations
+  - Three deletion options: current occurrence only, all future occurrences, or cancel
+  - Added `recurrenceGroupId` field to optimize Firestore queries and reduce index requirements
+  - Implemented real-time UI updates with fade-out animations during deletion
+  - Fallback support for legacy transactions without `recurrenceGroupId`
+- **Optimized Firestore Performance**: 
+  - Reduced complex composite indexes by using `recurrenceGroupId` for grouping
+  - Implemented efficient batch deletion with only 2 query filters instead of 6+
+  - Added comprehensive Firestore index documentation
+- **Improved User Experience**:
+  - Professional modal design with colored buttons, warning icons, and smooth animations
+  - Real-time table updates without manual refresh required
+  - Visual feedback during deletion process with transition effects
+  - Clear success/error messages with detailed descriptions
+
 ### December 13, 2024
 - **Fixed Firestore Index Error**: Resolved query index requirements by simplifying database queries to remove redundant userId filters
 - **Implemented Automatic Recurring Transactions**: Added system to automatically replicate recurring transactions for 12 future months

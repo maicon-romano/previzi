@@ -489,16 +489,36 @@ export const deleteRecurringTransactionWithOptions = async (
     await deleteTransaction(userId, transaction.id);
     return 1; // Uma transação excluída
   } else {
-    // Excluir todas as ocorrências futuras (incluindo a atual)
-    const futureTransactions = await getFutureRecurringTransactions(userId, transaction);
-    
-    // Excluir em batch
-    const deletePromises = futureTransactions.map(trans => 
-      deleteTransaction(userId, trans.id)
-    );
-    
-    await Promise.all(deletePromises);
-    return futureTransactions.length;
+    // Para exclusão de todas as futuras, usar recurrenceGroupId se disponível
+    if (transaction.recurrenceGroupId) {
+      // Nova abordagem otimizada com recurrenceGroupId (apenas 2 filtros)
+      const q = query(
+        collection(db, "users", userId, "transactions"),
+        where("recurrenceGroupId", "==", transaction.recurrenceGroupId),
+        where("date", ">=", Timestamp.fromDate(transaction.date))
+      );
+
+      const querySnapshot = await getDocs(q);
+      
+      // Deletar todas as instâncias futuras
+      const deletePromises = querySnapshot.docs.map(docSnapshot => deleteDoc(docSnapshot.ref));
+      await Promise.all(deletePromises);
+      
+      console.log(`🗑️ ${querySnapshot.docs.length} transações recorrentes futuras deletadas via recurrenceGroupId`);
+      return querySnapshot.docs.length;
+    } else {
+      // Fallback para transações antigas sem recurrenceGroupId
+      const futureTransactions = await getFutureRecurringTransactions(userId, transaction);
+      
+      // Excluir em batch
+      const deletePromises = futureTransactions.map(trans => 
+        deleteTransaction(userId, trans.id)
+      );
+      
+      await Promise.all(deletePromises);
+      console.log(`🗑️ ${futureTransactions.length} transações recorrentes futuras deletadas via fallback`);
+      return futureTransactions.length;
+    }
   }
 };
 
