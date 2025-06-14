@@ -43,10 +43,21 @@ export const addTransaction = async (userId: string, transaction: Omit<Transacti
   return docRef.id;
 };
 
-// Função para gerar transações recorrentes (simplificada conforme estrutura real)
+// Função para gerar transações recorrentes - APENAS para transações fixas
 export const generateRecurringTransactions = async (userId: string, originalId: string, originalTransaction: Omit<TransactionType, "id" | "userId" | "createdAt">) => {
-  // Para transações recorrentes, gerar apenas as próximas 3 mensalidades
-  const monthsToGenerate = 3;
+  // Para transações infinitas, não gerar nada - será feito dinamicamente
+  if (originalTransaction.recurringType === "infinite") {
+    console.log('Transação infinita - não gerando cópias, será criada dinamicamente');
+    return;
+  }
+  
+  // Para transações fixas, gerar apenas o número especificado
+  const monthsToGenerate = originalTransaction.recurringMonths || 0;
+  
+  if (monthsToGenerate === 0) {
+    console.log('Nenhuma transação recorrente para gerar');
+    return;
+  }
   
   for (let i = 1; i <= monthsToGenerate; i++) {
     const futureDate = new Date(originalTransaction.date);
@@ -54,19 +65,22 @@ export const generateRecurringTransactions = async (userId: string, originalId: 
     
     const futureTransaction = {
       type: originalTransaction.type,
-      amount: originalTransaction.amount, // Sempre usar o valor original para recorrentes
+      amount: originalTransaction.amount,
       category: originalTransaction.category,
       description: originalTransaction.description,
       source: originalTransaction.source,
       date: Timestamp.fromDate(futureDate),
       status: 'pending' as const,
       recurring: originalTransaction.recurring,
+      recurringType: originalTransaction.recurringType,
       userId,
       createdAt: Timestamp.fromDate(new Date()),
     };
     
     await addDoc(collection(db, "users", userId, "transactions"), futureTransaction);
   }
+  
+  console.log(`Geradas ${monthsToGenerate} transações recorrentes fixas`);
 };
 
 export const getTransactions = async (userId: string): Promise<TransactionType[]> => {
