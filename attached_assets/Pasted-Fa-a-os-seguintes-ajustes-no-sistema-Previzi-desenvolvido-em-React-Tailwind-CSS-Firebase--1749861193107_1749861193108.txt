@@ -1,0 +1,79 @@
+Faça os seguintes ajustes no sistema Previzi, desenvolvido em React + Tailwind CSS + Firebase:
+
+---
+
+🟢 PARTE 1: MELHORIA VISUAL DAS NOTIFICAÇÕES (TOASTS)
+
+Problema atual: As notificações estão com fundo branco ou preto normal, mas o visual geral está simples e o ícone de status (sucesso, erro, info, atenção) está básico.
+
+✅ Ajustes esperados:
+
+- Manter o fundo branco no light mode e preto no dark mode
+- Melhorar a tipografia (exemplo: fonte sem serifa, tamanho e espaçamento adequados)
+- Borda arredondada com leve sombra
+- Ícone de status (no início de cada toast):
+  - Sucesso: Ícone de check moderno
+  - Erro: Ícone de X ou warning
+  - Info: Ícone de informação
+  - Atenção/Alerta: Ícone de triângulo com exclamação
+- Barra de progresso visual discreta mas presente
+- Duração automática de 3 a 5 segundos
+- Botão "X" de fechar manual
+- No máximo 3 toasts simultâneos na tela
+- Posição: canto inferior direito (ou ajustável no mobile)
+
+Tecnologias: Pode usar Sonner, React Toastify ou um sistema custom com Tailwind + Framer Motion.
+
+---
+
+🟢 PARTE 2: ATUALIZAÇÃO EM TEMPO REAL SEM RELOAD DE PÁGINA
+
+Problema atual: Quando o usuário adiciona ou remove uma transação, a página precisa ser recarregada manualmente.
+
+✅ Ajustes esperados:
+
+- A listagem de transações (tabela ou cards) deve atualizar automaticamente após:
+  - Criar uma nova transação
+  - Editar uma transação
+  - Excluir uma transação
+- A atualização deve afetar **somente a tabela de transações**, sem reload de página inteira.
+- Pode utilizar:
+  - Firestore onSnapshot()
+  - React Query + invalidateQueries()
+  - Ou outro método de reatividade com contexto/estado
+- Se possível, adicione um pequeno efeito visual (exemplo: fade ou highlight temporário) ao adicionar uma nova linha na tabela.
+
+---
+
+🟢 PARTE 3: AJUSTE NA EXCLUSÃO DE TRANSAÇÕES RECORRENTES
+
+Problema atual: Ao excluir uma transação recorrente, não tenho controle sobre excluir apenas do mês atual ou de todos os meses futuros.
+
+✅ Ajustes esperados:
+
+- Ao clicar em "Excluir" uma transação que é recorrente, abrir um **SweetAlert2 ou Modal de confirmação com duas opções:**
+
+1. **Excluir apenas deste mês**
+   - Exclui apenas a transação atual (documento daquele mês)
+
+2. **Excluir esta e todas as próximas ocorrências**
+   - Exclui todas as transações futuras com:
+     - Mesmo `description`
+     - Mesmo `category`
+     - Mesmo `type`
+     - Mesmo `source`
+     - Mesmo `userId`
+     - Campo `recurring: true`
+     - E com `date` >= à data da transação atual
+
+- Se o usuário escolher excluir todas as próximas:
+  - Faça uma query para buscar todas as ocorrências futuras da transação, e exclua todas em batch.
+
+- Exibir um toast de sucesso após a exclusão, com mensagem clara:  
+  - Exemplo: **"Transação excluída apenas deste mês"** ou **"Todas as ocorrências futuras foram excluídas"**
+
+---
+
+🛠️ Tecnologias usadas: React, Tailwind CSS, Firebase Firestore, SweetAlert2 (para modais).
+
+Objetivo: Melhorar a experiência visual, garantir atualização em tempo real e oferecer controle granular sobre exclusão de transações recorrentes.

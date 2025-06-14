@@ -196,32 +196,17 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
         }
 
         if (transactionData.isVariableAmount) {
-          toast("Transação Recorrente Variável Criada", {
+          toast.success("Transação Recorrente Variável Criada", {
             description: `Transação criada para os ${durationText}. Você pode definir os valores mensalmente.`,
-            style: {
-              background: '#22c55e',
-              color: '#ffffff',
-              border: '1px solid #16a34a',
-            },
           });
         } else {
-          toast("Transação Recorrente Criada", {
+          toast.success("Transação Recorrente Criada", {
             description: `Transação principal criada e replicada automaticamente para os ${durationText}!`,
-            style: {
-              background: '#22c55e',
-              color: '#ffffff',
-              border: '1px solid #16a34a',
-            },
           });
         }
       } else {
-        toast("Transação adicionada", {
+        toast.success("Transação adicionada", {
           description: "A transação foi adicionada com sucesso.",
-          style: {
-            background: '#22c55e',
-            color: '#ffffff',
-            border: '1px solid #16a34a',
-          },
         });
       }
 
@@ -234,13 +219,8 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
       }
     } catch (error) {
       console.error("Error adding transaction:", error);
-      toast("Erro ao salvar transação", {
+      toast.error("Erro ao salvar transação", {
         description: error instanceof Error ? error.message : "Não foi possível adicionar a transação. Tente novamente.",
-        style: {
-          background: '#ef4444',
-          color: '#ffffff',
-          border: '1px solid #dc2626',
-        },
       });
     } finally {
       setIsLoading(false);

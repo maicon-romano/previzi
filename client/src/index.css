@@ -109,6 +109,14 @@
   --destructive-foreground: hsl(0, 0%, 98%);
   --ring: hsl(240, 4.9%, 83.9%);
   --radius: 0.5rem;
+  --sidebar-background: hsl(240, 5.9%, 10%);
+  --sidebar-foreground: hsl(0, 0%, 98%);
+  --sidebar-primary: hsl(207, 90%, 54%);
+  --sidebar-primary-foreground: hsl(211, 100%, 99%);
+  --sidebar-accent: hsl(240, 3.7%, 15.9%);
+  --sidebar-accent-foreground: hsl(0, 0%, 98%);
+  --sidebar-border: hsl(240, 3.7%, 15.9%);
+  --sidebar-ring: hsl(240, 4.9%, 83.9%);
 }
 
 @layer base {
@@ -130,6 +138,61 @@
 /* Custom success and danger color utilities */
 .text-success-500 {
   color: hsl(142, 71%, 45%);
+}
+
+/* Custom Toast Styles */
+.toast-custom {
+  font-weight: 500;
+  backdrop-filter: blur(8px);
+  animation: slideIn 0.3s ease-out;
+}
+
+.toast-custom [data-icon] {
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Toast progress bar styling */
+[data-sonner-toaster] [data-progress] {
+  background: hsl(var(--primary));
+  height: 2px;
+  border-radius: 1px;
+}
+
+/* Dark mode adjustments for toasts */
+.dark .toast-custom {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Success toast custom styling */
+[data-type="success"] {
+  border-left: 4px solid hsl(142 76% 36%);
+}
+
+/* Error toast custom styling */
+[data-type="error"] {
+  border-left: 4px solid hsl(0 84% 60%);
+}
+
+/* Info toast custom styling */
+[data-type="info"] {
+  border-left: 4px solid hsl(221 83% 53%);
+}
+
+/* Warning toast custom styling */
+[data-type="warning"] {
+  border-left: 4px solid hsl(38 92% 50%);
 }
 
 .text-success-600 {
