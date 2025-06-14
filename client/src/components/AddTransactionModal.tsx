@@ -96,11 +96,46 @@ const transactionSchema = z.object({
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
 
+// Função para formatar número brasileiro
+const formatCurrency = (value: string) => {
+  // Remove tudo que não é dígito
+  const numbers = value.replace(/\D/g, '');
+  
+  // Se não há números, retorna vazio
+  if (!numbers) return '';
+  
+  // Converte para número e divide por 100 para ter os centavos
+  const amount = parseFloat(numbers) / 100;
+  
+  // Formata como moeda brasileira
+  return amount.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+// Função para converter formato brasileiro para número
+const parseCurrency = (value: string): number => {
+  // Remove tudo que não é dígito, vírgula ou ponto
+  const cleanValue = value.replace(/[^\d,.-]/g, '');
+  
+  // Se o valor contém vírgula, trata como formato brasileiro (123.456,78)
+  if (cleanValue.includes(',')) {
+    // Remove pontos (separadores de milhares) e substitui vírgula por ponto
+    const normalizedValue = cleanValue.replace(/\./g, '').replace(',', '.');
+    return parseFloat(normalizedValue) || 0;
+  }
+  
+  // Se não contém vírgula, trata como formato americano (123456.78)
+  return parseFloat(cleanValue) || 0;
+};
+
 export default function AddTransactionModal({ isOpen, onClose, onTransactionAdded }: AddTransactionModalProps) {
   const { currentUser } = useAuth();
   const { categories } = useCategories();
   const { sources } = useSources();
   const [isLoading, setIsLoading] = useState(false);
+  const [displayAmount, setDisplayAmount] = useState("");
 
   const form = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
@@ -125,6 +160,12 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
   const watchVariableAmount = form.watch("isVariableAmount");
   const watchRecurringType = form.watch("recurringType");
 
+  const handleAmountChange = (value: string) => {
+    const formatted = formatCurrency(value);
+    setDisplayAmount(formatted);
+    form.setValue("amount", formatted);
+  };
+
   const onSubmit = async (data: TransactionFormData) => {
     if (!currentUser) return;
 
@@ -137,14 +178,12 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
       let amount: number | null = null;
       
       if (!data.recurring || !data.isVariableAmount) {
-        // Validar e converter valor apenas se não for recorrente variável
-        const cleanValue = data.amount.replace(/[R$\s.,]/g, '').replace(',', '.');
-        const numValue = parseFloat(cleanValue);
+        // Usar a função parseCurrency para converter corretamente
+        amount = parseCurrency(data.amount);
         
-        if (isNaN(numValue) || numValue <= 0) {
+        if (isNaN(amount) || amount <= 0) {
           throw new Error("Valor deve ser um número positivo");
         }
-        amount = numValue;
       }
 
       // Preparar dados de recorrência
@@ -268,14 +307,13 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
                   <FormLabel>Valor</FormLabel>
                   <FormControl>
                     <Input
-                      {...field}
-                      type="number"
-                      step="0.01"
                       placeholder={
                         watchRecurring && watchVariableAmount 
                           ? "Valor será definido mensalmente" 
                           : "0,00"
                       }
+                      value={displayAmount}
+                      onChange={(e) => handleAmountChange(e.target.value)}
                       disabled={watchRecurring && watchVariableAmount}
                     />
                   </FormControl>
