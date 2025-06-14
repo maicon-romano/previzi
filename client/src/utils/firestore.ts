@@ -41,7 +41,7 @@ const checkExistingRecurringTransactions = async (userId: string, transaction: O
 
 // Transaction utilities using the real Firestore structure
 export const addTransaction = async (userId: string, transaction: Omit<TransactionType, "id" | "userId" | "createdAt">) => {
-  const transactionData = {
+  const transactionData: any = {
     type: transaction.type,
     amount: transaction.amount,
     category: transaction.category,
@@ -51,12 +51,20 @@ export const addTransaction = async (userId: string, transaction: Omit<Transacti
     status: transaction.status,
     recurring: transaction.recurring,
     isVariableAmount: transaction.isVariableAmount || false,
-    recurringType: transaction.recurringType,
-    recurringMonths: transaction.recurringMonths,
-    recurringEndDate: transaction.recurringEndDate,
     userId,
     createdAt: Timestamp.fromDate(new Date()),
   };
+
+  // Adicionar campos opcionais apenas se tiverem valores definidos
+  if (transaction.recurringType !== undefined) {
+    transactionData.recurringType = transaction.recurringType;
+  }
+  if (transaction.recurringMonths !== undefined) {
+    transactionData.recurringMonths = transaction.recurringMonths;
+  }
+  if (transaction.recurringEndDate !== undefined) {
+    transactionData.recurringEndDate = transaction.recurringEndDate;
+  }
 
   console.log('Salvando transação no Firestore:', transactionData);
 
@@ -113,7 +121,7 @@ const generateRecurringTransactions = async (userId: string, originalTransaction
       futureDate.setDate(0); // Último dia do mês desejado
     }
     
-    const futureTransaction = {
+    const futureTransaction: any = {
       type: originalTransaction.type,
       amount: originalTransaction.isVariableAmount ? null : originalTransaction.amount, // Para variáveis, usar null
       category: originalTransaction.category,
@@ -123,12 +131,20 @@ const generateRecurringTransactions = async (userId: string, originalTransaction
       status: 'pending' as const, // Todas as futuras começam como pendentes
       recurring: originalTransaction.recurring,
       isVariableAmount: originalTransaction.isVariableAmount || false,
-      recurringType: originalTransaction.recurringType,
-      recurringMonths: originalTransaction.recurringMonths,
-      recurringEndDate: originalTransaction.recurringEndDate,
       userId,
       createdAt: Timestamp.fromDate(new Date()),
     };
+
+    // Adicionar campos opcionais apenas se tiverem valores definidos
+    if (originalTransaction.recurringType !== undefined) {
+      futureTransaction.recurringType = originalTransaction.recurringType;
+    }
+    if (originalTransaction.recurringMonths !== undefined) {
+      futureTransaction.recurringMonths = originalTransaction.recurringMonths;
+    }
+    if (originalTransaction.recurringEndDate !== undefined) {
+      futureTransaction.recurringEndDate = originalTransaction.recurringEndDate;
+    }
     
     batch.push(futureTransaction);
   }
