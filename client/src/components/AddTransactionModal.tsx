@@ -30,7 +30,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { TransactionType } from "../types";
 
 interface AddTransactionModalProps {
@@ -60,7 +60,6 @@ const defaultCategories = {
 
 export default function AddTransactionModal({ isOpen, onClose, onTransactionAdded }: AddTransactionModalProps) {
   const { currentUser } = useAuth();
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<TransactionFormData>({
@@ -314,6 +313,29 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
                 </FormItem>
               )}
             />
+
+            {watchRecurring && (
+              <FormField
+                control={form.control}
+                name="isVariableAmount"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 ml-6">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Valor variável (ex: Conta de Luz)</FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Para transações que mudam de valor mensalmente
+                      </p>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            )}
 
 
 

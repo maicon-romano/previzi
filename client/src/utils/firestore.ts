@@ -99,13 +99,14 @@ const generateRecurringTransactions = async (userId: string, originalTransaction
     
     const futureTransaction = {
       type: originalTransaction.type,
-      amount: originalTransaction.amount, // Sempre usar o valor original
+      amount: originalTransaction.isVariableAmount ? null : originalTransaction.amount, // Para variáveis, usar null
       category: originalTransaction.category,
       description: originalTransaction.description,
       source: originalTransaction.source,
       date: Timestamp.fromDate(futureDate),
       status: 'pending' as const, // Todas as futuras começam como pendentes
       recurring: originalTransaction.recurring,
+      isVariableAmount: originalTransaction.isVariableAmount || false,
       userId,
       createdAt: Timestamp.fromDate(new Date()),
     };
