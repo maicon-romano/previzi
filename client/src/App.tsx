@@ -69,17 +69,23 @@ function App() {
           <Toaster 
             position="bottom-right"
             expand={false}
-            richColors
+            richColors={false}
             closeButton
             duration={4000}
             visibleToasts={3}
             toastOptions={{
               style: {
-                background: 'hsl(var(--background))',
-                border: '1px solid hsl(var(--border))',
-                color: 'hsl(var(--foreground))',
+                background: '#ffffff',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                color: '#1f2937',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                fontSize: '14px',
+                fontWeight: '500',
               },
+              className: 'rounded-lg',
             }}
+            theme="light"
           />
         </TooltipProvider>
       </AuthProvider>

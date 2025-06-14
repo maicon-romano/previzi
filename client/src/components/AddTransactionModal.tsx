@@ -49,6 +49,9 @@ const transactionSchema = z.object({
   status: z.enum(["paid", "pending"]),
   recurring: z.boolean(),
   isVariableAmount: z.boolean().optional(),
+  recurringType: z.enum(["infinite", "fixed"]).optional(),
+  recurringMonths: z.string().optional(),
+  recurringEndDate: z.string().optional(),
 }).refine(
   (data) => {
     // Se for recorrente e variável, o valor pode estar vazio
@@ -61,6 +64,31 @@ const transactionSchema = z.object({
   {
     message: "Valor é obrigatório",
     path: ["amount"],
+  }
+).refine(
+  (data) => {
+    // Se for recorrente, o tipo de recorrência é obrigatório
+    if (data.recurring) {
+      return data.recurringType && data.recurringType.length > 0;
+    }
+    return true;
+  },
+  {
+    message: "Tipo de recorrência é obrigatório",
+    path: ["recurringType"],
+  }
+).refine(
+  (data) => {
+    // Se for recorrência fixa, deve ter meses ou data de término
+    if (data.recurring && data.recurringType === "fixed") {
+      return (data.recurringMonths && data.recurringMonths.trim().length > 0) || 
+             (data.recurringEndDate && data.recurringEndDate.trim().length > 0);
+    }
+    return true;
+  },
+  {
+    message: "Para recorrência fixa, defina a quantidade de meses ou data de término",
+    path: ["recurringMonths"],
   }
 );
 
@@ -87,12 +115,16 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
       status: "paid",
       recurring: false,
       isVariableAmount: false,
+      recurringType: "infinite",
+      recurringMonths: "",
+      recurringEndDate: "",
     },
   });
 
   const watchType = form.watch("type");
   const watchRecurring = form.watch("recurring");
   const watchVariableAmount = form.watch("isVariableAmount");
+  const watchRecurringType = form.watch("recurringType");
 
   const onSubmit = async (data: TransactionFormData) => {
     if (!currentUser) return;
@@ -116,6 +148,19 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
         amount = numValue;
       }
 
+      // Preparar dados de recorrência
+      let recurringMonths: number | undefined;
+      let recurringEndDate: string | undefined;
+
+      if (data.recurring && data.recurringType === "fixed") {
+        if (data.recurringMonths && data.recurringMonths.trim()) {
+          recurringMonths = parseInt(data.recurringMonths);
+        }
+        if (data.recurringEndDate && data.recurringEndDate.trim()) {
+          recurringEndDate = data.recurringEndDate;
+        }
+      }
+
       // Garantir que todos os campos estão com tipos corretos conforme estrutura real do Firestore
       const transactionData = {
         type: data.type,
@@ -127,6 +172,9 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
         status: data.status,
         recurring: data.recurring,
         isVariableAmount: data.isVariableAmount || false,
+        recurringType: data.recurring ? data.recurringType : undefined,
+        recurringMonths: recurringMonths,
+        recurringEndDate: recurringEndDate,
       };
 
       console.log('Dados da transação a serem salvos:', transactionData);
@@ -136,17 +184,32 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
       // Feedback específico para transações recorrentes
       if (transactionData.recurring) {
         if (transactionData.isVariableAmount) {
-          toast.success("Transação Recorrente Variável Criada", {
+          toast("Transação Recorrente Variável Criada", {
             description: "Transação criada para os próximos 12 meses. Você pode definir os valores mensalmente.",
+            style: {
+              background: '#22c55e',
+              color: '#ffffff',
+              border: '1px solid #16a34a',
+            },
           });
         } else {
-          toast.success("Transação Recorrente Criada", {
+          toast("Transação Recorrente Criada", {
             description: "Transação principal criada e replicada automaticamente para os próximos 12 meses!",
+            style: {
+              background: '#22c55e',
+              color: '#ffffff',
+              border: '1px solid #16a34a',
+            },
           });
         }
       } else {
-        toast.success("Transação adicionada", {
+        toast("Transação adicionada", {
           description: "A transação foi adicionada com sucesso.",
+          style: {
+            background: '#22c55e',
+            color: '#ffffff',
+            border: '1px solid #16a34a',
+          },
         });
       }
 
@@ -159,8 +222,13 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
       }
     } catch (error) {
       console.error("Error adding transaction:", error);
-      toast.error("Erro ao salvar transação", {
+      toast("Erro ao salvar transação", {
         description: error instanceof Error ? error.message : "Não foi possível adicionar a transação. Tente novamente.",
+        style: {
+          background: '#ef4444',
+          color: '#ffffff',
+          border: '1px solid #dc2626',
+        },
       });
     } finally {
       setIsLoading(false);

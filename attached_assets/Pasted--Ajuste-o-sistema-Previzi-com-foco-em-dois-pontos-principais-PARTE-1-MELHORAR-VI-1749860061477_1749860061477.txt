@@ -1,0 +1,77 @@
+
+
+
+Ajuste o sistema Previzi com foco em dois pontos principais:
+
+---
+
+🟢 PARTE 1: MELHORAR VISUAL DAS NOTIFICAÇÕES (TOASTS)
+
+Problema atual: As notificações estão ficando **transparentes, sem contraste e visualmente feias**.
+
+✅ Ajustes esperados:
+
+- Deixar o visual das notificações moderno, legível e com bom contraste.
+- Remover transparência exagerada. Fundo deve ser sólido com leve sombra.
+- Aplicar borda arredondada (ex: rounded-lg).
+- Tipografia clara (ex: text-white ou text-black dependendo do tema).
+- Usar cores padrão para cada tipo de mensagem:
+  - Sucesso: Verde (#22c55e ou similar)
+  - Erro: Vermelho (#ef4444 ou similar)
+  - Info: Azul (#3b82f6 ou similar)
+  - Aviso: Amarelo (#facc15 ou similar)
+- Garantir que o toast tenha:
+  - Barra de progresso visual (linha ou animação)
+  - Botão de fechar (ícone X)
+  - Tempo de exibição automática entre 3 a 5 segundos
+  - No máximo 3 notificações empilhadas ao mesmo tempo
+- Exibir no canto inferior direito da tela
+- Responsivo para mobile
+
+Tecnologias permitidas: Tailwind CSS + Framer Motion ou biblioteca como Sonner / React Toastify.
+
+---
+
+🟢 PARTE 2: AJUSTAR LÓGICA DE TRANSAÇÕES RECORRENTES
+
+Problema atual: As transações recorrentes estão sendo criadas apenas para 1 ano (12 meses). Quero mais controle.
+
+✅ Novos comportamentos esperados:
+
+1. Nova opção no formulário de transação: **"Duração da recorrência"**  
+O usuário poderá escolher entre:
+
+- **Recorrência Infinita**:  
+  - Exemplo: Salário fixo, conta de energia contínua
+  - Deve gerar transações automaticamente à medida que os meses forem acessados no sistema (ex: sempre gerar o próximo mês quando o usuário abrir o sistema ou via cron)
+
+- **Recorrência com Prazo Determinado**:  
+  - Exemplo: Parcelamento de 6 meses, curso que dura 3 meses, etc.
+  - O usuário informará:
+    - **Quantidade de meses** (ex: 6x)
+    - **Data de término** (ex: até dezembro de 2025)
+
+2. Ajuste a lógica de criação:
+- Se for **infinita**, o sistema só cria o mês atual e vai criando os próximos meses dinamicamente sempre que necessário (ex: ao abrir um mês futuro)
+- Se for **prazo definido**, o sistema já cria todas as parcelas desde a data de início até o término (ou número de meses)
+
+3. Adicionar campos novos no Firestore em cada transação criada:
+
+```json
+{
+  "recurring": true,
+  "recurringType": "infinite" | "fixed",
+  "recurringMonths": 6, // apenas se for fixed por número de meses
+  "recurringEndDate": "2025-12-31", // apenas se for fixed por data
+}
+````
+
+4. Garantir que as transações futuras apareçam nas visualizações por mês (junho, julho, agosto…).
+
+5. Para transações com valor variável, permitir que o campo `amount` seja salvo como `null` ou `0` e o usuário edite mês a mês.
+
+6. Toda criação de transação recorrente deve continuar salvando o campo `userId` corretamente.
+
+--- 
+
+Faça os ajustes tanto na UI quanto na lógica de backend (Firestore writes). 

@@ -9,6 +9,9 @@ export interface TransactionType {
   status: "paid" | "pending";
   recurring: boolean;
   isVariableAmount?: boolean; // Para transações recorrentes com valor variável
+  recurringType?: "infinite" | "fixed"; // Tipo de recorrência
+  recurringMonths?: number; // Quantidade de meses para recorrência fixa
+  recurringEndDate?: string; // Data de término para recorrência fixa
   userId: string;
   createdAt: Date;
 }
