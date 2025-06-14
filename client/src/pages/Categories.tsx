@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useCategories } from "../hooks/useCategories";
+import { useSources } from "../hooks/useSources";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,38 +13,64 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Edit, Trash2, Plus } from "lucide-react";
+import { Edit, Trash2, Plus, User, Users } from "lucide-react";
 import Swal from "sweetalert2";
-import type { CategoryType } from "../types";
+import type { CategoryType, SourceType } from "../types";
 
-const categoryIcons = {
-  // Income icons
-  "Salário": "fas fa-briefcase",
-  "Freelance": "fas fa-handshake",
-  "Investimentos": "fas fa-chart-line",
-  "Outros": "fas fa-plus",
+const availableIcons = [
+  { value: "fas fa-briefcase", label: "Trabalho", category: "income" },
+  { value: "fas fa-handshake", label: "Freelance", category: "income" },
+  { value: "fas fa-chart-line", label: "Investimentos", category: "income" },
+  { value: "fas fa-piggy-bank", label: "Poupança", category: "income" },
+  { value: "fas fa-gift", label: "Presente", category: "income" },
+  { value: "fas fa-dollar-sign", label: "Dinheiro", category: "income" },
   
-  // Expense icons
-  "Moradia": "fas fa-home",
-  "Alimentação": "fas fa-utensils",
-  "Transporte": "fas fa-car",
-  "Lazer": "fas fa-gamepad",
-  "Saúde": "fas fa-heartbeat",
-  "Educação": "fas fa-graduation-cap",
-};
+  { value: "fas fa-home", label: "Moradia", category: "expense" },
+  { value: "fas fa-utensils", label: "Alimentação", category: "expense" },
+  { value: "fas fa-car", label: "Transporte", category: "expense" },
+  { value: "fas fa-gamepad", label: "Lazer", category: "expense" },
+  { value: "fas fa-heartbeat", label: "Saúde", category: "expense" },
+  { value: "fas fa-graduation-cap", label: "Educação", category: "expense" },
+  { value: "fas fa-shopping-cart", label: "Compras", category: "expense" },
+  { value: "fas fa-tshirt", label: "Roupas", category: "expense" },
+  { value: "fas fa-mobile-alt", label: "Telefone", category: "expense" },
+  { value: "fas fa-bolt", label: "Energia", category: "expense" },
+  { value: "fas fa-tint", label: "Água", category: "expense" },
+  { value: "fas fa-wifi", label: "Internet", category: "expense" },
+  { value: "fas fa-credit-card", label: "Cartão", category: "expense" },
+  { value: "fas fa-university", label: "Banco", category: "expense" },
+  { value: "fas fa-plane", label: "Viagem", category: "expense" },
+  { value: "fas fa-paw", label: "Pet", category: "expense" },
+  { value: "fas fa-plus", label: "Outros", category: "both" },
+];
 
 export default function Categories() {
-  const { categories, isLoading, addCategory, deleteCategory, updateCategory } = useCategories();
+  const { categories, isLoading: categoriesLoading, addCategory, deleteCategory, updateCategory } = useCategories();
+  const { sources, isLoading: sourcesLoading, addSource, deleteSource, updateSource } = useSources();
   const { toast } = useToast();
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
+  // Category states
+  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
+  const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryType, setNewCategoryType] = useState<"income" | "expense">("income");
+  const [newCategoryIcon, setNewCategoryIcon] = useState("");
   const [editingCategory, setEditingCategory] = useState<CategoryType | null>(null);
   const [editCategoryName, setEditCategoryName] = useState("");
   const [editCategoryType, setEditCategoryType] = useState<"income" | "expense">("income");
+  const [editCategoryIcon, setEditCategoryIcon] = useState("");
+  
+  // Source states
+  const [isAddSourceModalOpen, setIsAddSourceModalOpen] = useState(false);
+  const [isEditSourceModalOpen, setIsEditSourceModalOpen] = useState(false);
+  const [newSourceName, setNewSourceName] = useState("");
+  const [editingSource, setEditingSource] = useState<SourceType | null>(null);
+  const [editSourceName, setEditSourceName] = useState("");
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAddCategory = async () => {

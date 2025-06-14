@@ -13,7 +13,7 @@ import {
 } from "firebase/firestore";
 import { startOfMonth, endOfMonth } from "date-fns";
 import { db } from "../firebase";
-import { TransactionType, CategoryType } from "../types";
+import { TransactionType, CategoryType, SourceType } from "../types";
 
 // Transaction utilities
 export const addTransaction = async (userId: string, transaction: Omit<TransactionType, "id" | "userId" | "createdAt">) => {
@@ -189,5 +189,54 @@ export const createDefaultCategories = async (userId: string) => {
 
   for (const category of defaultCategories) {
     await addCategory(userId, category);
+  }
+};
+
+// Source utilities
+export const addSource = async (userId: string, source: Omit<SourceType, "id" | "userId" | "createdAt">) => {
+  const sourceData = {
+    ...source,
+    userId,
+    createdAt: Timestamp.now(),
+  };
+  
+  const docRef = await addDoc(collection(db, "users", userId, "sources"), sourceData);
+  return docRef.id;
+};
+
+export const getSources = async (userId: string): Promise<SourceType[]> => {
+  const q = query(
+    collection(db, "users", userId, "sources"),
+    orderBy("name", "asc")
+  );
+  
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+    createdAt: doc.data().createdAt.toDate(),
+  })) as SourceType[];
+};
+
+export const updateSource = async (userId: string, sourceId: string, updates: Partial<SourceType>) => {
+  const sourceRef = doc(db, "users", userId, "sources", sourceId);
+  await updateDoc(sourceRef, updates);
+};
+
+export const deleteSource = async (userId: string, sourceId: string) => {
+  const sourceRef = doc(db, "users", userId, "sources", sourceId);
+  await deleteDoc(sourceRef);
+};
+
+// Default sources for new users
+export const createDefaultSources = async (userId: string) => {
+  const defaultSources = [
+    { name: "Maicon" },
+    { name: "Gabi" },
+    { name: "Conjunto" },
+  ];
+
+  for (const source of defaultSources) {
+    await addSource(userId, source);
   }
 };

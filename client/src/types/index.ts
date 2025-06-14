@@ -26,6 +26,13 @@ export interface CategoryType {
   createdAt: Date;
 }
 
+export interface SourceType {
+  id: string;
+  name: string;
+  userId: string;
+  createdAt: Date;
+}
+
 export interface ProjectionType {
   id: string;
   month: string; // Format: YYYY-MM
