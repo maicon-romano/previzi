@@ -14,6 +14,9 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Edit, Trash2, Plus } from "lucide-react";
+import Swal from "sweetalert2";
+import type { CategoryType } from "../types";
 
 const categoryIcons = {
   // Income icons
@@ -32,11 +35,15 @@ const categoryIcons = {
 };
 
 export default function Categories() {
-  const { categories, isLoading, addCategory, deleteCategory } = useCategories();
+  const { categories, isLoading, addCategory, deleteCategory, updateCategory } = useCategories();
   const { toast } = useToast();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryType, setNewCategoryType] = useState<"income" | "expense">("income");
+  const [editingCategory, setEditingCategory] = useState<CategoryType | null>(null);
+  const [editCategoryName, setEditCategoryName] = useState("");
+  const [editCategoryType, setEditCategoryType] = useState<"income" | "expense">("income");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAddCategory = async () => {
@@ -76,19 +83,108 @@ export default function Categories() {
     }
   };
 
+  const handleEditCategory = (category: CategoryType) => {
+    setEditingCategory(category);
+    setEditCategoryName(category.name);
+    setEditCategoryType(category.type);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateCategory = async () => {
+    if (!editingCategory || !editCategoryName.trim()) {
+      toast({
+        title: "Erro",
+        description: "Nome da categoria é obrigatório.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await updateCategory(editingCategory.id, {
+        name: editCategoryName.trim(),
+        type: editCategoryType,
+        icon: categoryIcons[editCategoryName as keyof typeof categoryIcons] || "fas fa-tag",
+      });
+
+      toast({
+        title: "Categoria atualizada",
+        description: "A categoria foi atualizada com sucesso.",
+      });
+
+      setIsEditModalOpen(false);
+      setEditingCategory(null);
+      setEditCategoryName("");
+      setEditCategoryType("income");
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a categoria. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleDeleteCategory = async (categoryId: string, categoryName: string) => {
-    if (window.confirm(`Tem certeza que deseja excluir a categoria "${categoryName}"?`)) {
+    const result = await Swal.fire({
+      title: 'Excluir Categoria',
+      text: `Tem certeza que deseja excluir a categoria "${categoryName}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sim, excluir',
+      cancelButtonText: 'Cancelar',
+      background: '#ffffff',
+      customClass: {
+        popup: 'rounded-lg',
+        title: 'text-lg font-semibold text-gray-900',
+        content: 'text-gray-600',
+        confirmButton: 'px-4 py-2 rounded-md font-medium',
+        cancelButton: 'px-4 py-2 rounded-md font-medium'
+      }
+    });
+
+    if (result.isConfirmed) {
       try {
         await deleteCategory(categoryId);
         toast({
           title: "Categoria excluída",
           description: "A categoria foi excluída com sucesso.",
         });
+        
+        Swal.fire({
+          title: 'Excluída!',
+          text: 'A categoria foi excluída com sucesso.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false,
+          background: '#ffffff',
+          customClass: {
+            popup: 'rounded-lg',
+            title: 'text-lg font-semibold text-green-600'
+          }
+        });
       } catch (error) {
         toast({
           title: "Erro",
           description: "Não foi possível excluir a categoria. Tente novamente.",
           variant: "destructive",
+        });
+        
+        Swal.fire({
+          title: 'Erro!',
+          text: 'Não foi possível excluir a categoria.',
+          icon: 'error',
+          confirmButtonColor: '#ef4444',
+          background: '#ffffff',
+          customClass: {
+            popup: 'rounded-lg',
+            title: 'text-lg font-semibold text-red-600'
+          }
         });
       }
     }

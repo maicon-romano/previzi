@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { getCategories, addCategory as addCategoryUtil, deleteCategory as deleteCategoryUtil, createDefaultCategories } from "../utils/firebase";
+import { getCategories, addCategory as addCategoryUtil, updateCategory as updateCategoryUtil, deleteCategory as deleteCategoryUtil, createDefaultCategories } from "../utils/firebase";
 import { CategoryType } from "../types";
 
 export function useCategories() {
@@ -53,6 +53,16 @@ export function useCategories() {
     return categoryId;
   };
 
+  const updateCategory = async (categoryId: string, updates: Partial<CategoryType>) => {
+    if (!currentUser) throw new Error("User not authenticated");
+
+    await updateCategoryUtil(currentUser.uid, categoryId, updates);
+    
+    // Refetch categories to update the list
+    const userCategories = await getCategories(currentUser.uid);
+    setCategories(userCategories);
+  };
+
   const deleteCategory = async (categoryId: string) => {
     if (!currentUser) throw new Error("User not authenticated");
 
@@ -68,6 +78,7 @@ export function useCategories() {
     isLoading,
     error,
     addCategory,
+    updateCategory,
     deleteCategory,
   };
 }

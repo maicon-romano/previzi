@@ -158,6 +158,11 @@ export const getCategories = async (userId: string): Promise<CategoryType[]> => 
   })) as CategoryType[];
 };
 
+export const updateCategory = async (userId: string, categoryId: string, updates: Partial<CategoryType>) => {
+  const categoryRef = doc(db, "users", userId, "categories", categoryId);
+  await updateDoc(categoryRef, updates);
+};
+
 export const deleteCategory = async (userId: string, categoryId: string) => {
   const categoryRef = doc(db, "users", userId, "categories", categoryId);
   await deleteDoc(categoryRef);
