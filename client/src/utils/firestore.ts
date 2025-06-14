@@ -415,3 +415,115 @@ export const createDefaultCategories = async (userId: string) => {
     await addCategory(userId, category);
   }
 };
+
+// Função para subscrever transações em tempo real
+export const subscribeToTransactions = (
+  userId: string,
+  onTransactionsChange: (transactions: TransactionType[]) => void,
+  onError: (error: Error) => void
+) => {
+  const q = query(
+    collection(db, "users", userId, "transactions"),
+    orderBy("date", "desc")
+  );
+
+  const unsubscribe = onSnapshot(
+    q,
+    (querySnapshot) => {
+      const transactions: TransactionType[] = [];
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        transactions.push({
+          id: doc.id,
+          type: data.type,
+          amount: data.amount,
+          category: data.category,
+          description: data.description,
+          source: data.source,
+          date: data.date.toDate(),
+          status: data.status,
+          recurring: data.recurring || false,
+          isVariableAmount: data.isVariableAmount || false,
+          recurringType: data.recurringType,
+          recurringMonths: data.recurringMonths,
+          recurringEndDate: data.recurringEndDate,
+          userId: data.userId,
+          createdAt: data.createdAt.toDate(),
+        });
+      });
+      
+      onTransactionsChange(transactions);
+    },
+    onError
+  );
+
+  return unsubscribe;
+};
+
+// Função para excluir transação recorrente com controle granular
+export const deleteRecurringTransactionWithOptions = async (
+  userId: string, 
+  transaction: TransactionType, 
+  deleteOption: "current" | "all_future"
+) => {
+  if (deleteOption === "current") {
+    // Excluir apenas a transação atual
+    await deleteTransaction(userId, transaction.id);
+    return 1; // Uma transação excluída
+  } else {
+    // Excluir todas as ocorrências futuras (incluindo a atual)
+    const futureTransactions = await getFutureRecurringTransactions(userId, transaction);
+    
+    // Excluir em batch
+    const deletePromises = futureTransactions.map(trans => 
+      deleteTransaction(userId, trans.id)
+    );
+    
+    await Promise.all(deletePromises);
+    return futureTransactions.length;
+  }
+};
+
+// Função para buscar transações recorrentes futuras
+const getFutureRecurringTransactions = async (
+  userId: string, 
+  originalTransaction: TransactionType
+): Promise<TransactionType[]> => {
+  if (!originalTransaction.recurring) {
+    return [originalTransaction];
+  }
+
+  const q = query(
+    collection(db, "users", userId, "transactions"),
+    where("description", "==", originalTransaction.description),
+    where("category", "==", originalTransaction.category),
+    where("type", "==", originalTransaction.type),
+    where("source", "==", originalTransaction.source),
+    where("recurring", "==", true),
+    where("date", ">=", Timestamp.fromDate(originalTransaction.date)),
+    orderBy("date", "asc")
+  );
+
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      type: data.type,
+      amount: data.amount,
+      category: data.category,
+      description: data.description,
+      source: data.source,
+      date: data.date.toDate(),
+      status: data.status,
+      recurring: data.recurring || false,
+      isVariableAmount: data.isVariableAmount || false,
+      recurringType: data.recurringType,
+      recurringMonths: data.recurringMonths,
+      recurringEndDate: data.recurringEndDate,
+      userId: data.userId,
+      createdAt: data.createdAt.toDate(),
+    };
+  }) as TransactionType[];
+};

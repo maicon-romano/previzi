@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { getTransactions } from "../utils/firebase";
+import { subscribeToTransactions } from "../utils/firestore";
 import { TransactionType } from "../types";
 
 export function useTransactions() {
@@ -16,40 +16,34 @@ export function useTransactions() {
       return;
     }
 
-    const fetchTransactions = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const userTransactions = await getTransactions(currentUser.uid);
+    setIsLoading(true);
+    setError(null);
+
+    // Subscrever para atualizações em tempo real
+    const unsubscribe = subscribeToTransactions(
+      currentUser.uid,
+      (userTransactions) => {
         setTransactions(userTransactions);
-      } catch (err) {
-        console.error("Error fetching transactions:", err);
+        setIsLoading(false);
+      },
+      (err) => {
+        console.error("Error in transactions subscription:", err);
         setError(err as Error);
-      } finally {
         setIsLoading(false);
       }
+    );
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
     };
-
-    fetchTransactions();
   }, [currentUser]);
-
-  const refetchTransactions = async () => {
-    if (!currentUser) return;
-
-    try {
-      setError(null);
-      const userTransactions = await getTransactions(currentUser.uid);
-      setTransactions(userTransactions);
-    } catch (err) {
-      console.error("Error refetching transactions:", err);
-      setError(err as Error);
-    }
-  };
 
   return {
     transactions,
     isLoading,
     error,
-    refetchTransactions,
   };
 }

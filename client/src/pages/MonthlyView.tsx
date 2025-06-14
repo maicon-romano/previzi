@@ -1,20 +1,20 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { getTransactionsByMonth, updateTransaction, parseMonthString } from "../utils/firestore";
+import { getTransactionsByMonth, updateTransaction, parseMonthString, deleteRecurringTransactionWithOptions } from "../utils/firestore";
 import type { TransactionType } from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { ChevronLeft, ChevronRight, Calendar, DollarSign } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, DollarSign, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import EditVariableTransactionModal from "../components/EditVariableTransactionModal";
+import Swal from "sweetalert2";
 
 export default function MonthlyView() {
   const { currentUser } = useAuth();
-  const { toast } = useToast();
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -58,10 +58,8 @@ export default function MonthlyView() {
       setTransactions(monthTransactions);
     } catch (error) {
       console.error('Erro ao carregar transações:', error);
-      toast({
-        title: "Erro",
+      toast.error("Erro ao carregar transações", {
         description: "Não foi possível carregar as transações do mês.",
-        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
