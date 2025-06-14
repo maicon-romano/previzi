@@ -217,8 +217,17 @@ export const getTransactions = async (userId: string): Promise<TransactionType[]
 
 // Função para buscar transações por mês usando filtros de data otimizada (sem índice composto)
 export const getTransactionsByMonth = async (userId: string, year: number, month: number): Promise<TransactionType[]> => {
+  console.log(`🔍 getTransactionsByMonth chamada para ${year}-${month}`);
+  
   // Primeiro, verificar e gerar transações recorrentes infinitas para este mês
-  await checkAndGenerateInfiniteRecurringTransactions(userId, year, month);
+  try {
+    const generated = await checkAndGenerateInfiniteRecurringTransactions(userId, year, month);
+    if (generated.length > 0) {
+      console.log(`✨ ${generated.length} transações infinitas geradas para ${year}-${month}`);
+    }
+  } catch (error) {
+    console.error(`❌ Erro ao gerar transações infinitas para ${year}-${month}:`, error);
+  }
   
   const start = startOfMonth(new Date(year, month - 1)); // month é 1-based, Date é 0-based
   const end = endOfMonth(new Date(year, month - 1));
@@ -265,6 +274,15 @@ export const subscribeToMonthlyTransactions = (
   onUpdate: (transactions: TransactionType[]) => void,
   onError: (error: Error) => void
 ) => {
+  // IMPORTANTE: Gerar transações infinitas ANTES de criar o listener
+  checkAndGenerateInfiniteRecurringTransactions(userId, year, month)
+    .then(() => {
+      console.log(`✅ Verificação de transações infinitas concluída para ${year}-${month}`);
+    })
+    .catch((error) => {
+      console.error(`❌ Erro ao verificar transações infinitas para ${year}-${month}:`, error);
+    });
+
   const start = startOfMonth(new Date(year, month - 1));
   const end = endOfMonth(new Date(year, month - 1));
   
@@ -652,6 +670,9 @@ export const generateInfiniteRecurringTransactionForMonth = async (
     }
     
     // Verificar se já existe uma transação para este mês
+    const monthStart = startOfMonth(targetDate);
+    const monthEnd = endOfMonth(targetDate);
+    
     let existingQuery;
     
     if (originalTransaction.recurrenceGroupId) {
@@ -659,17 +680,17 @@ export const generateInfiniteRecurringTransactionForMonth = async (
       existingQuery = query(
         collection(db, "users", userId, "transactions"),
         where("recurrenceGroupId", "==", originalTransaction.recurrenceGroupId),
-        where("date", ">=", Timestamp.fromDate(startOfMonth(targetDate))),
-        where("date", "<=", Timestamp.fromDate(endOfMonth(targetDate)))
+        where("date", ">=", Timestamp.fromDate(monthStart)),
+        where("date", "<=", Timestamp.fromDate(monthEnd))
       );
     } else {
       // Fallback para transações sem recurrenceGroupId
       existingQuery = query(
         collection(db, "users", userId, "transactions"),
         where("description", "==", originalTransaction.description),
-        where("recurring", "==", true),
-        where("date", ">=", Timestamp.fromDate(startOfMonth(targetDate))),
-        where("date", "<=", Timestamp.fromDate(endOfMonth(targetDate)))
+        where("category", "==", originalTransaction.category),
+        where("date", ">=", Timestamp.fromDate(monthStart)),
+        where("date", "<=", Timestamp.fromDate(monthEnd))
       );
     }
     
@@ -677,9 +698,11 @@ export const generateInfiniteRecurringTransactionForMonth = async (
     
     // Se já existe, não criar novamente
     if (!existingSnapshot.empty) {
-      console.log(`Transação recorrente já existe para ${year}-${month}: ${originalTransaction.description}`);
+      console.log(`💡 Transação recorrente já existe para ${year}-${month}: ${originalTransaction.description}`);
       return null;
     }
+    
+    console.log(`🚀 Criando nova instância recorrente: ${originalTransaction.description} para ${year}-${month}`);
     
     // Criar nova transação para o mês específico
     const newTransaction: any = {
@@ -706,9 +729,11 @@ export const generateInfiniteRecurringTransactionForMonth = async (
       newTransaction.recurringEndDate = originalTransaction.recurringEndDate;
     }
     
-    console.log(`Criando transação recorrente dinâmica: ${originalTransaction.description} em ${targetDate.toLocaleDateString('pt-BR')}`);
+    console.log(`📝 Dados da nova transação:`, newTransaction);
+    console.log(`🎯 Salvando transação recorrente dinâmica: ${originalTransaction.description} em ${targetDate.toLocaleDateString('pt-BR')}`);
     
     const docRef = await addDoc(collection(db, "users", userId, "transactions"), newTransaction);
+    console.log(`✅ Transação recorrente salva com ID: ${docRef.id}`);
     return docRef.id;
     
   } catch (error) {
@@ -724,9 +749,9 @@ export const checkAndGenerateInfiniteRecurringTransactions = async (
   month: number
 ) => {
   try {
-    console.log(`Verificando transações recorrentes infinitas para ${year}-${month}`);
+    console.log(`🔄 Verificando transações recorrentes infinitas para ${year}-${month}`);
     
-    // Buscar todas as transações recorrentes infinitas
+    // 1. Buscar todas as transações recorrentes infinitas
     const recurringQuery = query(
       collection(db, "users", userId, "transactions"),
       where("recurring", "==", true),
@@ -734,9 +759,17 @@ export const checkAndGenerateInfiniteRecurringTransactions = async (
     );
     
     const recurringSnapshot = await getDocs(recurringQuery);
+    
+    if (recurringSnapshot.empty) {
+      console.log(`ℹ️ Nenhuma transação recorrente infinita encontrada`);
+      return [];
+    }
+    
+    console.log(`📋 Encontradas ${recurringSnapshot.docs.length} transações recorrentes infinitas`);
+    
     const generatedTransactions: string[] = [];
     
-    // Agrupar transações para identificar séries originais
+    // 2. Agrupar por recurrenceGroupId para identificar séries originais
     const seriesMap = new Map<string, TransactionType>();
     
     for (const doc of recurringSnapshot.docs) {
@@ -760,27 +793,40 @@ export const checkAndGenerateInfiniteRecurringTransactions = async (
         createdAt: data.createdAt.toDate(),
       };
       
-      // Usar recurrenceGroupId se disponível, senão criar chave única por descrição+categoria+valor
-      let groupKey = data.recurrenceGroupId;
-      if (!groupKey) {
-        groupKey = `${data.description}-${data.category}-${data.amount}-${data.type}`;
-      }
-      
-      // Para cada grupo, manter apenas a transação mais antiga (original)
-      const existing = seriesMap.get(groupKey);
-      if (!existing || transaction.date < existing.date) {
-        seriesMap.set(groupKey, transaction);
+      // Usar recurrenceGroupId como chave primária
+      if (data.recurrenceGroupId) {
+        const existing = seriesMap.get(data.recurrenceGroupId);
+        // Manter apenas a transação mais antiga (original) de cada série
+        if (!existing || transaction.date < existing.date) {
+          seriesMap.set(data.recurrenceGroupId, transaction);
+          console.log(`📌 Série identificada: ${data.recurrenceGroupId} - ${transaction.description}`);
+        }
+      } else {
+        // Fallback para transações sem recurrenceGroupId
+        const fallbackKey = `${data.description}-${data.category}-${data.amount}-${data.type}`;
+        const existing = seriesMap.get(fallbackKey);
+        if (!existing || transaction.date < existing.date) {
+          seriesMap.set(fallbackKey, transaction);
+          console.log(`📌 Série sem ID identificada: ${transaction.description}`);
+        }
       }
     }
     
-    // Para cada série original, verificar se precisa gerar para o mês alvo
+    console.log(`🎯 Total de ${seriesMap.size} séries originais identificadas`);
+    
+    // 3. Para cada série original, verificar se precisa gerar para o mês alvo
     const seriesArray = Array.from(seriesMap.values());
     for (let i = 0; i < seriesArray.length; i++) {
       const originalTransaction = seriesArray[i];
       const targetDate = new Date(year, month - 1, 1);
+      const originalDate = new Date(originalTransaction.date.getFullYear(), originalTransaction.date.getMonth(), 1);
+      
+      console.log(`🔍 Verificando ${originalTransaction.description}: original=${originalDate.toLocaleDateString('pt-BR')}, target=${targetDate.toLocaleDateString('pt-BR')}`);
       
       // Só gerar se o mês target for posterior ao mês original
-      if (targetDate > new Date(originalTransaction.date.getFullYear(), originalTransaction.date.getMonth(), 1)) {
+      if (targetDate > originalDate) {
+        console.log(`✅ Precisa gerar para ${originalTransaction.description}`);
+        
         const generatedId = await generateInfiniteRecurringTransactionForMonth(
           userId,
           year,
@@ -790,16 +836,18 @@ export const checkAndGenerateInfiniteRecurringTransactions = async (
         
         if (generatedId) {
           generatedTransactions.push(generatedId);
-          console.log(`Gerada transação recorrente: ${originalTransaction.description} para ${year}-${month}`);
+          console.log(`🎉 Gerada transação recorrente: ${originalTransaction.description} para ${year}-${month}`);
         }
+      } else {
+        console.log(`⏭️ Mês target não é posterior ao original para ${originalTransaction.description}`);
       }
     }
     
-    console.log(`Total de ${generatedTransactions.length} transações recorrentes infinitas geradas para ${year}-${month}`);
+    console.log(`✨ Total de ${generatedTransactions.length} transações recorrentes infinitas geradas para ${year}-${month}`);
     return generatedTransactions;
     
   } catch (error) {
-    console.error('Erro ao verificar e gerar transações recorrentes infinitas:', error);
+    console.error('❌ Erro ao verificar e gerar transações recorrentes infinitas:', error);
     return [];
   }
 };
