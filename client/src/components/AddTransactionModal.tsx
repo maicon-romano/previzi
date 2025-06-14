@@ -41,7 +41,7 @@ interface AddTransactionModalProps {
 
 const transactionSchema = z.object({
   type: z.enum(["income", "expense"]),
-  amount: z.string().min(1, "Valor é obrigatório"),
+  amount: z.string(),
   category: z.string().min(1, "Categoria é obrigatória"),
   description: z.string().min(1, "Descrição é obrigatória"),
   source: z.string().min(1, "Origem é obrigatória"),
@@ -49,7 +49,20 @@ const transactionSchema = z.object({
   status: z.enum(["paid", "pending"]),
   recurring: z.boolean(),
   isVariableAmount: z.boolean().optional(),
-});
+}).refine(
+  (data) => {
+    // Se for recorrente e variável, o valor pode estar vazio
+    if (data.recurring && data.isVariableAmount) {
+      return true;
+    }
+    // Caso contrário, o valor é obrigatório
+    return data.amount && data.amount.trim().length > 0;
+  },
+  {
+    message: "Valor é obrigatório",
+    path: ["amount"],
+  }
+);
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
 
@@ -122,13 +135,17 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
 
       // Feedback específico para transações recorrentes
       if (transactionData.recurring) {
-        toast({
-          title: "Transação Recorrente Criada",
-          description: "Transação principal criada e replicada automaticamente para os próximos 12 meses!",
-        });
+        if (transactionData.isVariableAmount) {
+          toast.success("Transação Recorrente Variável Criada", {
+            description: "Transação criada para os próximos 12 meses. Você pode definir os valores mensalmente.",
+          });
+        } else {
+          toast.success("Transação Recorrente Criada", {
+            description: "Transação principal criada e replicada automaticamente para os próximos 12 meses!",
+          });
+        }
       } else {
-        toast({
-          title: "Transação adicionada",
+        toast.success("Transação adicionada", {
           description: "A transação foi adicionada com sucesso.",
         });
       }
@@ -142,10 +159,8 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
       }
     } catch (error) {
       console.error("Error adding transaction:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível adicionar a transação. Tente novamente.",
-        variant: "destructive",
+      toast.error("Erro ao salvar transação", {
+        description: error instanceof Error ? error.message : "Não foi possível adicionar a transação. Tente novamente.",
       });
     } finally {
       setIsLoading(false);
