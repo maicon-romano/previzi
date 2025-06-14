@@ -276,8 +276,12 @@ export const subscribeToMonthlyTransactions = (
 ) => {
   // IMPORTANTE: Gerar transações infinitas ANTES de criar o listener
   checkAndGenerateInfiniteRecurringTransactions(userId, year, month)
-    .then(() => {
-      console.log(`✅ Verificação de transações infinitas concluída para ${year}-${month}`);
+    .then((generated) => {
+      if (generated.length > 0) {
+        console.log(`✅ ${generated.length} transações infinitas geradas para ${year}-${month}`);
+      } else {
+        console.log(`ℹ️ Nenhuma transação infinita nova para ${year}-${month}`);
+      }
     })
     .catch((error) => {
       console.error(`❌ Erro ao verificar transações infinitas para ${year}-${month}:`, error);
