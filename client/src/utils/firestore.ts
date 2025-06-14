@@ -220,6 +220,7 @@ export const subscribeToMonthlyTransactions = (
         date: data.date.toDate(),
         status: data.status,
         recurring: data.recurring,
+        isVariableAmount: data.isVariableAmount || false,
         userId: data.userId,
         createdAt: data.createdAt.toDate(),
       };

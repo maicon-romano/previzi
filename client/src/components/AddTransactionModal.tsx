@@ -214,10 +214,20 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
                       {...field}
                       type="number"
                       step="0.01"
-                      placeholder="0,00"
+                      placeholder={
+                        watchRecurring && watchVariableAmount 
+                          ? "Valor será definido mensalmente" 
+                          : "0,00"
+                      }
+                      disabled={watchRecurring && watchVariableAmount}
                     />
                   </FormControl>
                   <FormMessage />
+                  {watchRecurring && watchVariableAmount && (
+                    <p className="text-sm text-muted-foreground">
+                      Para transações variáveis, o valor será definido mensalmente na visualização mensal
+                    </p>
+                  )}
                 </FormItem>
               )}
             />

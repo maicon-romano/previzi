@@ -248,9 +248,15 @@ export default function MonthlyView() {
                   
                   <div className="flex items-center gap-4">
                     <span className={`text-lg font-bold ${
-                      transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                      transaction.amount !== null 
+                        ? (transaction.type === 'income' ? 'text-green-600' : 'text-red-600')
+                        : 'text-yellow-600'
                     }`}>
-                      {transaction.type === 'income' ? '+' : '-'}R$ {transaction.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      {transaction.amount !== null ? (
+                        `${transaction.type === 'income' ? '+' : '-'}R$ ${transaction.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                      ) : (
+                        "Valor a definir"
+                      )}
                     </span>
                     
                     <div className="flex items-center gap-2">
