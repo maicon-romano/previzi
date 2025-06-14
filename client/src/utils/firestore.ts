@@ -50,6 +50,10 @@ export const addTransaction = async (userId: string, transaction: Omit<Transacti
     date: Timestamp.fromDate(transaction.date),
     status: transaction.status,
     recurring: transaction.recurring,
+    isVariableAmount: transaction.isVariableAmount || false,
+    recurringType: transaction.recurringType,
+    recurringMonths: transaction.recurringMonths,
+    recurringEndDate: transaction.recurringEndDate,
     userId,
     createdAt: Timestamp.fromDate(new Date()),
   };
@@ -75,9 +79,21 @@ export const addTransaction = async (userId: string, transaction: Omit<Transacti
 };
 
 // Função para gerar transações recorrentes automaticamente
-const generateRecurringTransactions = async (userId: string, originalTransaction: Omit<TransactionType, "id" | "userId" | "createdAt">, monthsToGenerate: number = 12) => {
-  // Gerar transações para os próximos N meses (padrão: 12)
+const generateRecurringTransactions = async (userId: string, originalTransaction: Omit<TransactionType, "id" | "userId" | "createdAt">) => {
   const originalDate = new Date(originalTransaction.date);
+  let monthsToGenerate = 12; // Padrão para recorrência infinita
+  
+  // Calcular quantos meses gerar baseado no tipo de recorrência
+  if (originalTransaction.recurringType === "fixed") {
+    if (originalTransaction.recurringMonths) {
+      monthsToGenerate = originalTransaction.recurringMonths;
+    } else if (originalTransaction.recurringEndDate) {
+      const endDate = new Date(originalTransaction.recurringEndDate);
+      const diffTime = Math.abs(endDate.getTime() - originalDate.getTime());
+      const diffMonths = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30.44)); // Aproximação de dias por mês
+      monthsToGenerate = Math.min(diffMonths, 120); // Máximo de 10 anos
+    }
+  }
   
   console.log(`Gerando ${monthsToGenerate} transações recorrentes para a transação: ${originalTransaction.description}`);
   
@@ -107,6 +123,9 @@ const generateRecurringTransactions = async (userId: string, originalTransaction
       status: 'pending' as const, // Todas as futuras começam como pendentes
       recurring: originalTransaction.recurring,
       isVariableAmount: originalTransaction.isVariableAmount || false,
+      recurringType: originalTransaction.recurringType,
+      recurringMonths: originalTransaction.recurringMonths,
+      recurringEndDate: originalTransaction.recurringEndDate,
       userId,
       createdAt: Timestamp.fromDate(new Date()),
     };

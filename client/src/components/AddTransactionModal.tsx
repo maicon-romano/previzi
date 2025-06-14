@@ -181,11 +181,23 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
 
       await addTransaction(currentUser.uid, transactionData);
 
-      // Feedback específico para transações recorrentes
+      // Feedback específico para transações recorrentes com duração
       if (transactionData.recurring) {
+        let durationText = "próximos 12 meses"; // Padrão para infinita
+        
+        if (data.recurringType === "fixed") {
+          if (data.recurringMonths && data.recurringMonths.trim()) {
+            const months = parseInt(data.recurringMonths);
+            durationText = `próximos ${months} ${months === 1 ? 'mês' : 'meses'}`;
+          } else if (data.recurringEndDate && data.recurringEndDate.trim()) {
+            const endDate = new Date(data.recurringEndDate);
+            durationText = `até ${endDate.toLocaleDateString('pt-BR')}`;
+          }
+        }
+
         if (transactionData.isVariableAmount) {
           toast("Transação Recorrente Variável Criada", {
-            description: "Transação criada para os próximos 12 meses. Você pode definir os valores mensalmente.",
+            description: `Transação criada para os ${durationText}. Você pode definir os valores mensalmente.`,
             style: {
               background: '#22c55e',
               color: '#ffffff',
@@ -194,7 +206,7 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
           });
         } else {
           toast("Transação Recorrente Criada", {
-            description: "Transação principal criada e replicada automaticamente para os próximos 12 meses!",
+            description: `Transação principal criada e replicada automaticamente para os ${durationText}!`,
             style: {
               background: '#22c55e',
               color: '#ffffff',
@@ -430,7 +442,74 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
               />
             )}
 
+            {watchRecurring && (
+              <FormField
+                control={form.control}
+                name="recurringType"
+                render={({ field }) => (
+                  <FormItem className="ml-6">
+                    <FormLabel>Duração da recorrência</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="infinite">Recorrência Infinita</SelectItem>
+                        <SelectItem value="fixed">Prazo Determinado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
+            {watchRecurring && watchRecurringType === "fixed" && (
+              <div className="ml-6 space-y-3">
+                <FormField
+                  control={form.control}
+                  name="recurringMonths"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Quantidade de meses (opcional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          placeholder="Ex: 6"
+                          min="1"
+                          max="120"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="recurringEndDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Data de término (opcional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="date"
+                          min={new Date().toISOString().split("T")[0]}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <p className="text-sm text-muted-foreground">
+                        Defina pelo menos a quantidade de meses ou data de término
+                      </p>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
 
               <div className="flex justify-end space-x-3 pt-4 flex-shrink-0">
                 <Button type="button" variant="outline" onClick={onClose}>
