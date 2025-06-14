@@ -107,15 +107,16 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 ### June 14, 2025
-- **Fixed Critical Infinite Recurring Transaction System**: Completely overhauled to provide true infinite recurrence
-  - Eliminated 12-month limitation - infinite transactions now continue indefinitely
-  - Implemented on-demand generation: transactions created only when accessing future months
-  - Modified `addTransaction` to skip bulk generation for infinite recurring transactions
-  - Added robust `checkAndGenerateInfiniteRecurringTransactions` function with series grouping
-  - Enhanced `generateInfiniteRecurringTransactionForMonth` with proper date handling and edge cases
-  - Integrated dynamic generation into `getTransactionsByMonth` for seamless operation
-  - Fixed transactions still generate upfront, infinite transactions generate dynamically
-  - Optimized database queries to prevent duplicate creation and identify original series
+- **Fixed Critical Infinite Recurring Transaction System**: Completely resolved infinite transaction limitations
+  - Eliminated all artificial 12-month constraints for infinite recurring transactions
+  - Implemented true on-demand generation: transactions created dynamically when accessing any future month
+  - Modified `addTransaction` to skip bulk generation for infinite transactions (only original saved)
+  - Enhanced `checkAndGenerateInfiniteRecurringTransactions` with robust series detection
+  - Improved duplicate detection for transactions with and without `recurrenceGroupId`
+  - Fixed date calculation edge cases (February 29th, month-end transitions)
+  - Integrated seamless dynamic generation into `getTransactionsByMonth`
+  - System now supports navigation to years 2027, 2028, 2029+ with automatic transaction creation
+  - Optimized Firestore queries to prevent duplicates and identify original transaction series
 
 - **Fixed AddTransactionModal Form Reset Issue**: Implemented automatic form clearing when modal opens
   - Added useEffect to automatically reset all form fields when modal opens
