@@ -138,14 +138,7 @@ export default function Categories() {
       cancelButtonColor: '#6b7280',
       confirmButtonText: 'Sim, excluir',
       cancelButtonText: 'Cancelar',
-      background: '#ffffff',
-      customClass: {
-        popup: 'rounded-lg',
-        title: 'text-lg font-semibold text-gray-900',
-        content: 'text-gray-600',
-        confirmButton: 'px-4 py-2 rounded-md font-medium',
-        cancelButton: 'px-4 py-2 rounded-md font-medium'
-      }
+      reverseButtons: true
     });
 
     if (result.isConfirmed) {
@@ -161,12 +154,7 @@ export default function Categories() {
           text: 'A categoria foi excluída com sucesso.',
           icon: 'success',
           timer: 2000,
-          showConfirmButton: false,
-          background: '#ffffff',
-          customClass: {
-            popup: 'rounded-lg',
-            title: 'text-lg font-semibold text-green-600'
-          }
+          showConfirmButton: false
         });
       } catch (error) {
         toast({
@@ -179,12 +167,7 @@ export default function Categories() {
           title: 'Erro!',
           text: 'Não foi possível excluir a categoria.',
           icon: 'error',
-          confirmButtonColor: '#ef4444',
-          background: '#ffffff',
-          customClass: {
-            popup: 'rounded-lg',
-            title: 'text-lg font-semibold text-red-600'
-          }
+          confirmButtonColor: '#ef4444'
         });
       }
     }
