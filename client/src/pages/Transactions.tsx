@@ -92,11 +92,8 @@ export default function Transactions() {
       const newStatus = currentStatus === 'paid' ? 'pending' : 'paid';
       await updateTransaction(currentUser.uid, transactionId, { status: newStatus });
       
-      setTransactions(prev => 
-        prev.map(t => 
-          t.id === transactionId ? { ...t, status: newStatus } : t
-        )
-      );
+      // O listener em tempo real irá atualizar automaticamente a tabela
+      // Removido setTransactions manual pois o onSnapshot detecta mudanças
 
       toast({
         title: "Status atualizado",
@@ -112,7 +109,37 @@ export default function Transactions() {
   };
 
   useEffect(() => {
-    loadTransactions();
+    if (!currentUser) return;
+
+    setIsLoading(true);
+    
+    // Configurar listener em tempo real para todas as transações
+    const unsubscribe = subscribeToTransactions(
+      currentUser.uid,
+      (allTransactions) => {
+        // Filtrar transações do mês selecionado localmente
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const monthTransactions = allTransactions.filter(transaction => {
+          const transactionDate = new Date(transaction.date);
+          return transactionDate.getFullYear() === year && 
+                 transactionDate.getMonth() === month - 1;
+        });
+        
+        setTransactions(monthTransactions);
+        setIsLoading(false);
+      },
+      (error) => {
+        console.error('Erro ao carregar transações:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar as transações do mês.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
   }, [selectedMonth, currentUser]);
 
   if (isLoading) {
