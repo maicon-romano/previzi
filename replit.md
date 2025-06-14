@@ -107,6 +107,21 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 ### June 14, 2025
+- **Fixed Critical Infinite Recurring Transaction System**: Implemented dynamic generation for truly infinite recurring transactions
+  - Removed 12-month limitation for infinite recurring transactions
+  - Dynamic generation system creates transactions when months are accessed, not upfront
+  - Added `checkAndGenerateInfiniteRecurringTransactions` function to verify and create missing transactions
+  - Integrated dynamic generation into `getTransactionsByMonth` for automatic transaction creation
+  - Fixed transactions now generate only the specified number of months, infinite transactions generate dynamically
+  - Optimized database queries to prevent duplicate transaction creation
+
+- **Fixed AddTransactionModal Form Reset Issue**: Implemented automatic form clearing when modal opens
+  - Added useEffect to automatically reset all form fields when modal opens
+  - Form now clears previous transaction data and starts fresh each time
+  - Reset includes all fields: description, amount, category, date, type, status, source, and recurring options
+  - Display amount field also resets to prevent showing previous values
+  - Default values properly restored on each modal opening
+
 - **Complete Edit Button Implementation for All Transaction Pages**: Added comprehensive transaction editing functionality
   - Modern blue edit button with Lucide React Edit icon and smooth hover transitions
   - Properly aligned with delete button in actions column with consistent styling

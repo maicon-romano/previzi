@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -159,6 +159,27 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
   const watchRecurring = form.watch("recurring");
   const watchVariableAmount = form.watch("isVariableAmount");
   const watchRecurringType = form.watch("recurringType");
+
+  // Reset form quando o modal abrir
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        type: "expense",
+        amount: "",
+        category: "",
+        description: "",
+        source: "",
+        date: new Date().toISOString().split("T")[0],
+        status: "paid",
+        recurring: false,
+        isVariableAmount: false,
+        recurringType: "infinite",
+        recurringMonths: "",
+        recurringEndDate: "",
+      });
+      setDisplayAmount("");
+    }
+  }, [isOpen, form]);
 
   const handleAmountChange = (value: string) => {
     const formatted = formatCurrency(value);
