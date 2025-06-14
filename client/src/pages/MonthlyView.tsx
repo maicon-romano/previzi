@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { ChevronLeft, ChevronRight, Calendar, DollarSign, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, DollarSign, Trash2, Edit } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import EditTransactionModal from "../components/EditTransactionModal";
 import EditVariableTransactionModal from "../components/EditVariableTransactionModal";
 import Swal from "sweetalert2";
 
@@ -23,6 +24,7 @@ export default function MonthlyView() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingTransaction, setEditingTransaction] = useState<TransactionType | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isVariableEditModalOpen, setIsVariableEditModalOpen] = useState(false);
   const [deletingTransactionId, setDeletingTransactionId] = useState<string | null>(null);
 
   const monthNames = [
@@ -107,22 +109,23 @@ export default function MonthlyView() {
         )
       );
 
-      toast({
-        title: "Status atualizado",
+      toast.success("Status atualizado", {
         description: `Transação marcada como ${newStatus === 'paid' ? 'paga' : 'pendente'}.`,
       });
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o status da transação.",
-        variant: "destructive",
-      });
+      toast.error("Não foi possível atualizar o status da transação.");
     }
   };
 
   const handleEditTransaction = (transaction: TransactionType) => {
     setEditingTransaction(transaction);
-    setIsEditModalOpen(true);
+    
+    // Se for transação recorrente com valor variável, usar modal específico
+    if (transaction.recurring && transaction.isVariableAmount) {
+      setIsVariableEditModalOpen(true);
+    } else {
+      setIsEditModalOpen(true);
+    }
   };
 
   const handleTransactionUpdated = () => {
@@ -428,6 +431,16 @@ export default function MonthlyView() {
                         onCheckedChange={() => handleStatusToggle(transaction)}
                         className="data-[state=checked]:bg-green-500"
                       />
+                      
+                      {/* Botão de edição */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditTransaction(transaction)}
+                        className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
                       
                       {/* Botão de exclusão */}
                       <Button
