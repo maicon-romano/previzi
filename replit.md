@@ -107,13 +107,15 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 ### June 14, 2025
-- **Fixed Critical Infinite Recurring Transaction System**: Implemented dynamic generation for truly infinite recurring transactions
-  - Removed 12-month limitation for infinite recurring transactions
-  - Dynamic generation system creates transactions when months are accessed, not upfront
-  - Added `checkAndGenerateInfiniteRecurringTransactions` function to verify and create missing transactions
-  - Integrated dynamic generation into `getTransactionsByMonth` for automatic transaction creation
-  - Fixed transactions now generate only the specified number of months, infinite transactions generate dynamically
-  - Optimized database queries to prevent duplicate transaction creation
+- **Fixed Critical Infinite Recurring Transaction System**: Completely overhauled to provide true infinite recurrence
+  - Eliminated 12-month limitation - infinite transactions now continue indefinitely
+  - Implemented on-demand generation: transactions created only when accessing future months
+  - Modified `addTransaction` to skip bulk generation for infinite recurring transactions
+  - Added robust `checkAndGenerateInfiniteRecurringTransactions` function with series grouping
+  - Enhanced `generateInfiniteRecurringTransactionForMonth` with proper date handling and edge cases
+  - Integrated dynamic generation into `getTransactionsByMonth` for seamless operation
+  - Fixed transactions still generate upfront, infinite transactions generate dynamically
+  - Optimized database queries to prevent duplicate creation and identify original series
 
 - **Fixed AddTransactionModal Form Reset Issue**: Implemented automatic form clearing when modal opens
   - Added useEffect to automatically reset all form fields when modal opens
