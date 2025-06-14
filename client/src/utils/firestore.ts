@@ -651,12 +651,27 @@ export const generateInfiniteRecurringTransactionForMonth = async (
       targetDate = new Date(year, month, 0); // Último dia do mês anterior (que é o mês alvo)
     }
     
-    const existingQuery = query(
-      collection(db, "users", userId, "transactions"),
-      where("recurrenceGroupId", "==", originalTransaction.recurrenceGroupId),
-      where("date", ">=", Timestamp.fromDate(startOfMonth(targetDate))),
-      where("date", "<=", Timestamp.fromDate(endOfMonth(targetDate)))
-    );
+    // Verificar se já existe uma transação para este mês
+    let existingQuery;
+    
+    if (originalTransaction.recurrenceGroupId) {
+      // Se tem recurrenceGroupId, usar query otimizada
+      existingQuery = query(
+        collection(db, "users", userId, "transactions"),
+        where("recurrenceGroupId", "==", originalTransaction.recurrenceGroupId),
+        where("date", ">=", Timestamp.fromDate(startOfMonth(targetDate))),
+        where("date", "<=", Timestamp.fromDate(endOfMonth(targetDate)))
+      );
+    } else {
+      // Fallback para transações sem recurrenceGroupId
+      existingQuery = query(
+        collection(db, "users", userId, "transactions"),
+        where("description", "==", originalTransaction.description),
+        where("recurring", "==", true),
+        where("date", ">=", Timestamp.fromDate(startOfMonth(targetDate))),
+        where("date", "<=", Timestamp.fromDate(endOfMonth(targetDate)))
+      );
+    }
     
     const existingSnapshot = await getDocs(existingQuery);
     
@@ -721,7 +736,7 @@ export const checkAndGenerateInfiniteRecurringTransactions = async (
     const recurringSnapshot = await getDocs(recurringQuery);
     const generatedTransactions: string[] = [];
     
-    // Agrupar por recurrenceGroupId para identificar séries originais
+    // Agrupar transações para identificar séries originais
     const seriesMap = new Map<string, TransactionType>();
     
     for (const doc of recurringSnapshot.docs) {
@@ -745,12 +760,16 @@ export const checkAndGenerateInfiniteRecurringTransactions = async (
         createdAt: data.createdAt.toDate(),
       };
       
+      // Usar recurrenceGroupId se disponível, senão criar chave única por descrição+categoria+valor
+      let groupKey = data.recurrenceGroupId;
+      if (!groupKey) {
+        groupKey = `${data.description}-${data.category}-${data.amount}-${data.type}`;
+      }
+      
       // Para cada grupo, manter apenas a transação mais antiga (original)
-      if (data.recurrenceGroupId) {
-        const existing = seriesMap.get(data.recurrenceGroupId);
-        if (!existing || transaction.date < existing.date) {
-          seriesMap.set(data.recurrenceGroupId, transaction);
-        }
+      const existing = seriesMap.get(groupKey);
+      if (!existing || transaction.date < existing.date) {
+        seriesMap.set(groupKey, transaction);
       }
     }
     
