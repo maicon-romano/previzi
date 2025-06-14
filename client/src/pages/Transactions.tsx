@@ -24,7 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { ChevronLeft, ChevronRight, Calendar, Filter, Edit, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { getTransactionsByMonth, updateTransaction, deleteTransaction, subscribeToTransactions } from "../utils/firestore";
+import { getTransactionsByMonth, updateTransaction, deleteTransaction, subscribeToMonthlyTransactions } from "../utils/firestore";
 import { useToast } from "@/hooks/use-toast";
 import EditTransactionModal from "../components/EditTransactionModal";
 import Swal from "sweetalert2";
@@ -89,6 +89,35 @@ export default function Transactions() {
     }
   };
 
+  const setupRealtimeListener = (monthRef: string) => {
+    if (!currentUser) return;
+
+    const [year, month] = monthRef.split('-').map(Number);
+    
+    setIsLoading(true);
+    
+    const unsubscribe = subscribeToMonthlyTransactions(
+      currentUser.uid,
+      year,
+      month,
+      (updatedTransactions) => {
+        setTransactions(updatedTransactions);
+        setIsLoading(false);
+      },
+      (error) => {
+        console.error('Erro ao escutar transações:', error);
+        toast({
+          title: "Erro",
+          description: "Erro na sincronização em tempo real.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+      }
+    );
+
+    return unsubscribe;
+  };
+
   const handleEditTransaction = (transaction: TransactionType) => {
     setEditingTransaction(transaction);
     setIsEditModalOpen(true);
@@ -101,8 +130,7 @@ export default function Transactions() {
       const newStatus = currentStatus === 'paid' ? 'pending' : 'paid';
       await updateTransaction(currentUser.uid, transactionId, { status: newStatus });
       
-      // Recarregar transações do mês atual
-      loadTransactionsForMonth(selectedMonth);
+      // Não precisa recarregar manualmente - o listener em tempo real atualiza automaticamente
 
       toast({
         title: "Status atualizado",
@@ -135,8 +163,7 @@ export default function Transactions() {
       try {
         await deleteTransaction(currentUser.uid, transactionId);
         
-        // Recarregar transações do mês atual
-        loadTransactionsForMonth(selectedMonth);
+        // Não precisa recarregar manualmente - o listener em tempo real atualiza automaticamente
         
         toast({
           title: "Transação excluída",
@@ -153,7 +180,13 @@ export default function Transactions() {
   };
 
   useEffect(() => {
-    loadTransactionsForMonth(selectedMonth);
+    if (!currentUser) return;
+
+    // Configurar listener em tempo real para o mês selecionado
+    const unsubscribe = setupRealtimeListener(selectedMonth);
+
+    // Cleanup function para cancelar o listener quando o componente for desmontado ou o mês mudar
+    return unsubscribe;
   }, [currentUser, selectedMonth]);
 
   // Filtrar transações
@@ -363,16 +396,18 @@ export default function Transactions() {
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="text-blue-600 hover:text-blue-700"
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors duration-200"
                             onClick={() => handleEditTransaction(transaction)}
+                            title="Editar transação"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="text-red-600 hover:text-red-700"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors duration-200"
                             onClick={() => handleDelete(transaction.id, transaction.description)}
+                            title="Excluir transação"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -408,8 +443,7 @@ export default function Transactions() {
         onClose={() => {
           setIsEditModalOpen(false);
           setEditingTransaction(null);
-          // Recarregar transações após edição
-          loadTransactionsForMonth(selectedMonth);
+          // Não precisa recarregar manualmente - o listener em tempo real atualiza automaticamente
         }}
         transaction={editingTransaction}
       />

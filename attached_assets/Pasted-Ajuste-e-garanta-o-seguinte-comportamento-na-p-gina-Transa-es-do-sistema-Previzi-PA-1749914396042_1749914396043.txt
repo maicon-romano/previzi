@@ -1,0 +1,46 @@
+Ajuste e garanta o seguinte comportamento na página "Transações" do sistema Previzi:
+
+---
+
+🟢 PARTE 1: VISUAL DO BOTÃO DE EDITAR
+
+- O botão de editar deve aparecer ao lado do botão de excluir, na coluna de ações da tabela de transações.
+- O ícone deve seguir o padrão de design do sistema (exemplo: um lápis ou um ícone de edição moderno, usando Lucide React).
+- O botão deve ter cor azul ou um tom neutro que se destaque visualmente, mas sem ser agressivo.
+- Manter alinhamento com os demais botões na tabela.
+
+---
+
+🟢 PARTE 2: FUNCIONALIDADE DO MODAL DE EDIÇÃO
+
+- Ao clicar no botão de editar, o sistema deve abrir o `EditTransactionModal`.
+- O modal deve carregar corretamente os dados da transação selecionada (valor, categoria, tipo, status, descrição, origem e data).
+- O usuário deve poder editar qualquer campo permitido.
+
+---
+
+🟢 PARTE 3: ATUALIZAÇÃO EM TEMPO REAL APÓS EDIÇÃO
+
+- Após o usuário salvar a edição:
+  - O modal deve fechar automaticamente.
+  - A tabela de transações da página de Transações deve recarregar automaticamente.
+  - A alteração deve aparecer imediatamente na tela, sem necessidade de refresh manual.
+- Se estiver usando Firestore com `onSnapshot()`, a alteração deve refletir automaticamente.
+- Se estiver usando React Query, aplicar `invalidateQueries()` para o cache da lista de transações.
+
+---
+
+🟢 PARTE 4: FORMATAÇÃO DE VALORES
+
+- Durante a edição:
+  - O campo de valor deve continuar aceitando formato numérico brasileiro (vírgula como decimal, exemplo: "845,84").
+  - O valor editado deve ser salvo no Firestore como número (`amount: Number`), evitando strings com formatação tipo "R$".
+
+- Na exibição na tabela:
+  - O valor deve ser mostrado com o prefixo `R$`, duas casas decimais e vírgula como separador decimal.
+
+---
+
+Tecnologias: React, Tailwind CSS, Firebase Firestore, Lucide React, SweetAlert2 (opcional para confirmação pós-edição).
+
+O objetivo é garantir um fluxo de edição fluido, visualmente agradável e com atualização de tela automática.
