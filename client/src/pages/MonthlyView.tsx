@@ -461,14 +461,26 @@ export default function MonthlyView() {
       </Card>
 
       {/* Modal de edição de transações variáveis */}
-      <EditVariableTransactionModal
+      <EditTransactionModal
         isOpen={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);
           setEditingTransaction(null);
         }}
         transaction={editingTransaction}
-        onTransactionUpdated={handleTransactionUpdated}
+      />
+
+      <EditVariableTransactionModal
+        isOpen={isVariableEditModalOpen}
+        onClose={() => {
+          setIsVariableEditModalOpen(false);
+          setEditingTransaction(null);
+        }}
+        transaction={editingTransaction}
+        onTransactionUpdated={() => {
+          setIsVariableEditModalOpen(false);
+          setEditingTransaction(null);
+        }}
       />
     </div>
   );
