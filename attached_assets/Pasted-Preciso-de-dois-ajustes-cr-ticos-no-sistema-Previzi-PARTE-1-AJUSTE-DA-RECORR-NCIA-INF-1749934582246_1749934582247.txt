@@ -1,0 +1,74 @@
+Preciso de dois ajustes críticos no sistema Previzi:
+
+---
+
+🟢 PARTE 1: AJUSTE DA RECORRÊNCIA INFINITA (Erro: Está limitando a 12 meses)
+
+**Problema atual:**  
+Ao criar uma nova transação marcada como "recorrente infinita", o sistema está gerando as transações apenas para os próximos 12 meses.  
+Depois disso, a transação não aparece mais nos meses futuros.
+
+✅ O que fazer:
+
+- Corrigir a lógica de criação de transações recorrentes infinitas.
+- A aplicação NÃO deve criar as transações futuras todas de uma vez (isso não escala).  
+- Em vez disso, a aplicação deve adotar a seguinte estratégia:
+
+**Nova Lógica Recomendada:**  
+Ao abrir qualquer mês futuro, o sistema deve:
+
+1. Verificar se existem transações daquele mês.
+2. Caso a transação seja marcada como `recurring: true` e `recurringType: "infinite"`,  
+mas ainda **não exista no mês em questão**,  
+👉 a aplicação deve **gerar dinamicamente aquela transação para o mês acessado**.
+
+Essa lógica pode rodar:
+
+- No `onSnapshot()` de leitura por mês  
+**OU**  
+- Num efeito (`useEffect`) sempre que o usuário mudar o mês selecionado.
+
+---
+
+🟢 PARTE 2: RESET AUTOMÁTICO DO FORMULÁRIO DE NOVA TRANSAÇÃO
+
+**Problema atual:**  
+Ao abrir o modal de "Nova Transação" para adicionar uma nova, os campos estão sendo carregados com os valores da última transação criada (exemplo: o valor anterior ainda aparece no campo).
+
+✅ O que fazer:
+
+- Garantir que, ao abrir o **AddTransactionModal**, os campos do formulário sejam **resetados automaticamente para valores vazios/defaults**.
+
+✅ Exemplo de reset:
+
+Ao abrir o modal:
+
+```ts
+useEffect(() => {
+  if (isOpen) {
+    setFormData({
+      description: "",
+      amount: "",
+      category: "",
+      date: new Date(),
+      type: "expense",
+      status: "pending",
+      source: "",
+      recurring: false,
+      isVariableAmount: false,
+      recurringType: "infinite",
+      recurringMonths: undefined,
+      recurringEndDate: undefined,
+    });
+  }
+}, [isOpen]);
+
+(Adapte conforme o seu formData atual)
+
+✅ Tecnologias usadas: React, Firebase Firestore.
+
+O objetivo é:
+
+1. Garantir que transações com recorrência infinita continuem aparecendo nos próximos meses indefinidamente.
+
+2. Garantir que o modal de nova transação abra sempre limpo, sem manter dados da última transação. 
