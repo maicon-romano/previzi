@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { getTransactionsByMonth, updateTransaction, parseMonthString, deleteRecurringTransactionWithOptions } from "../utils/firestore";
+import { getTransactionsByMonth, updateTransaction, parseMonthString, deleteRecurringTransactionWithOptions, subscribeToMonthlyTransactions } from "../utils/firestore";
 import type { TransactionType } from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,7 +68,30 @@ export default function MonthlyView() {
   };
 
   useEffect(() => {
-    loadTransactions();
+    if (!currentUser) return;
+
+    setIsLoading(true);
+    
+    // Configurar listener em tempo real para transações do mês
+    const { year, month } = parseMonthString(selectedMonth);
+    const unsubscribe = subscribeToMonthlyTransactions(
+      currentUser.uid,
+      year,
+      month,
+      (monthTransactions) => {
+        setTransactions(monthTransactions);
+        setIsLoading(false);
+      },
+      (error) => {
+        console.error('Erro ao carregar transações:', error);
+        toast.error("Erro ao carregar transações", {
+          description: "Não foi possível carregar as transações do mês.",
+        });
+        setIsLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
   }, [selectedMonth, currentUser]);
 
   const handleStatusToggle = async (transaction: TransactionType) => {
@@ -216,8 +239,7 @@ export default function MonthlyView() {
         setTimeout(async () => {
           const deletedCount = await deleteRecurringTransactionWithOptions(currentUser.uid, transaction, "all_future");
           
-          // Recarregar transações para refletir todas as exclusões
-          loadTransactions();
+          // O listener em tempo real irá atualizar automaticamente a tabela
           setDeletingTransactionId(null);
           
           toast.success("Todas as futuras ocorrências foram excluídas", {

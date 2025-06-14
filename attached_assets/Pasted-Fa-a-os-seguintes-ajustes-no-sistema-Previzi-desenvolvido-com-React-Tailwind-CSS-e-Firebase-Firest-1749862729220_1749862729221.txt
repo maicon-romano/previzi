@@ -1,0 +1,75 @@
+Faça os seguintes ajustes no sistema Previzi, desenvolvido com React, Tailwind CSS e Firebase Firestore:
+
+---
+
+🟢 PARTE 1: CORRIGIR O ERRO DE ÍNDICE NA EXCLUSÃO DE TODAS AS FUTURAS RECORRÊNCIAS
+
+Problema atual:
+
+Ao tentar excluir todas as futuras transações de uma recorrência (exemplo: excluir todas as parcelas futuras de uma despesa recorrente), recebo este erro:
+
+FirebaseError: The query requires an index.
+
+O filtro atual da query provavelmente envolve múltiplos campos, como:
+
+- recurring
+- source
+- type
+- date
+- __name__ (ou outro `orderBy` implícito)
+
+✅ Ações necessárias:
+
+- Copiar o link do erro mostrado pelo Firestore no console.
+- Criar o índice composto sugerido diretamente no Firebase Console.
+- Confirmar os campos envolvidos no índice.
+- Após a criação, garantir que a exclusão de todas as futuras ocorrências funcione sem erro.
+
+---
+
+🟢 PARTE 2: ATUALIZAÇÃO EM TEMPO REAL DA TABELA DE TRANSAÇÕES APÓS EXCLUSÃO
+
+Problema atual:
+
+Ao excluir uma transação (seja de um único mês ou de todos os meses), a tabela de transações **não atualiza automaticamente**, forçando o usuário a dar refresh manual na página.
+
+✅ Ações necessárias:
+
+- Garantir que, após qualquer exclusão (single ou em lote), a tabela de transações (ou o componente `TransactionsMonthly`) seja **recarregada automaticamente**.
+
+✅ Sugestões de implementação:
+
+- Se estiver usando Firestore `onSnapshot()`, a exclusão vai refletir automaticamente — apenas garanta que a query de listener esteja correta e com dependências limpas.
+- Se estiver usando React Query, execute um `invalidateQueries()` na query que carrega as transações do mês atual.
+- Se estiver usando estado/contexto local, force um reload da lista após o batch delete.
+
+✅ Exemplo de método após a exclusão:
+
+```ts
+await batch.commit();
+refetch(); // Se estiver usando React Query
+// Ou
+reloadTransactions(); // Se estiver usando estado local
+````
+
+✅ Adicionar um pequeno **toast de sucesso** após a exclusão.
+
+✅ Opcional: adicionar um **efeito visual de fade-out ou remoção animada das linhas da tabela** ao excluir.
+
+---
+
+🟢 PARTE 3: AJUSTES GERAIS NO MODAL DE CONFIRMAÇÃO DE EXCLUSÃO
+
+* Garantir que o modal de confirmação (SweetAlert2 ou outro) continue com duas opções claras:
+
+  * Excluir apenas este mês
+  * Excluir todas as futuras ocorrências
+* Visual moderno, tipografia clara, botão de cancelar.
+
+---
+
+🛠️ Tecnologias usadas: React, Firebase Firestore, Tailwind CSS, SweetAlert2.
+
+Objetivo final: Permitir ao usuário excluir apenas uma ocorrência ou todas as futuras da recorrência, sem erro de índice e com atualização automática da lista de transações visível na tela.
+
+```

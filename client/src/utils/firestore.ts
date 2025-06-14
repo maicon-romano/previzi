@@ -246,7 +246,8 @@ export const subscribeToMonthlyTransactions = (
   userId: string, 
   year: number, 
   month: number, 
-  callback: (transactions: TransactionType[]) => void
+  onUpdate: (transactions: TransactionType[]) => void,
+  onError: (error: Error) => void
 ) => {
   const start = startOfMonth(new Date(year, month - 1));
   const end = endOfMonth(new Date(year, month - 1));
@@ -259,27 +260,34 @@ export const subscribeToMonthlyTransactions = (
     orderBy("date", "desc")
   );
   
-  return onSnapshot(q, (querySnapshot) => {
-    const transactions = querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        type: data.type,
-        amount: data.amount,
-        category: data.category,
-        description: data.description,
-        source: data.source,
-        date: data.date.toDate(),
-        status: data.status,
-        recurring: data.recurring,
-        isVariableAmount: data.isVariableAmount || false,
-        userId: data.userId,
-        createdAt: data.createdAt.toDate(),
-      };
-    }) as TransactionType[];
-    
-    callback(transactions);
-  });
+  return onSnapshot(q, 
+    (querySnapshot) => {
+      const transactions = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          type: data.type,
+          amount: data.amount,
+          category: data.category,
+          description: data.description,
+          source: data.source,
+          date: data.date.toDate(),
+          status: data.status,
+          recurring: data.recurring || false,
+          isVariableAmount: data.isVariableAmount || false,
+          recurringType: data.recurringType,
+          recurringMonths: data.recurringMonths,
+          recurringEndDate: data.recurringEndDate,
+          recurrenceGroupId: data.recurrenceGroupId,
+          userId: data.userId,
+          createdAt: data.createdAt.toDate(),
+        };
+      }) as TransactionType[];
+      
+      onUpdate(transactions);
+    },
+    onError
+  );
 };
 
 // Atualizar transação
@@ -478,6 +486,8 @@ export const subscribeToTransactions = (
   return unsubscribe;
 };
 
+
+
 // Função para excluir transação recorrente com controle granular
 export const deleteRecurringTransactionWithOptions = async (
   userId: string, 
@@ -522,7 +532,7 @@ export const deleteRecurringTransactionWithOptions = async (
   }
 };
 
-// Função para buscar transações recorrentes futuras
+// Função para buscar transações recorrentes futuras (otimizada)
 const getFutureRecurringTransactions = async (
   userId: string, 
   originalTransaction: TransactionType
@@ -531,36 +541,78 @@ const getFutureRecurringTransactions = async (
     return [originalTransaction];
   }
 
+  // Se tem recurrenceGroupId, usar query otimizada
+  if (originalTransaction.recurrenceGroupId) {
+    const q = query(
+      collection(db, "users", userId, "transactions"),
+      where("recurrenceGroupId", "==", originalTransaction.recurrenceGroupId),
+      where("date", ">=", Timestamp.fromDate(originalTransaction.date))
+    );
+
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        type: data.type,
+        amount: data.amount,
+        category: data.category,
+        description: data.description,
+        source: data.source,
+        date: data.date.toDate(),
+        status: data.status,
+        recurring: data.recurring || false,
+        isVariableAmount: data.isVariableAmount || false,
+        recurringType: data.recurringType,
+        recurringMonths: data.recurringMonths,
+        recurringEndDate: data.recurringEndDate,
+        recurrenceGroupId: data.recurrenceGroupId,
+        userId: data.userId,
+        createdAt: data.createdAt.toDate(),
+      };
+    }) as TransactionType[];
+  }
+
+  // Fallback para transações antigas sem recurrenceGroupId
+  // Usar query simplificada para evitar erro de índice
   const q = query(
     collection(db, "users", userId, "transactions"),
     where("description", "==", originalTransaction.description),
-    where("category", "==", originalTransaction.category),
-    where("type", "==", originalTransaction.type),
-    where("source", "==", originalTransaction.source),
-    where("recurring", "==", true),
-    where("date", ">=", Timestamp.fromDate(originalTransaction.date)),
-    orderBy("date", "asc")
+    where("recurring", "==", true)
   );
 
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => {
-    const data = doc.data();
-    return {
-      id: doc.id,
-      type: data.type,
-      amount: data.amount,
-      category: data.category,
-      description: data.description,
-      source: data.source,
-      date: data.date.toDate(),
-      status: data.status,
-      recurring: data.recurring || false,
-      isVariableAmount: data.isVariableAmount || false,
-      recurringType: data.recurringType,
-      recurringMonths: data.recurringMonths,
-      recurringEndDate: data.recurringEndDate,
-      userId: data.userId,
-      createdAt: data.createdAt.toDate(),
-    };
-  }) as TransactionType[];
+  
+  // Filtrar manualmente para evitar índices compostos complexos
+  const filteredTransactions = querySnapshot.docs
+    .map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        type: data.type,
+        amount: data.amount,
+        category: data.category,
+        description: data.description,
+        source: data.source,
+        date: data.date.toDate(),
+        status: data.status,
+        recurring: data.recurring || false,
+        isVariableAmount: data.isVariableAmount || false,
+        recurringType: data.recurringType,
+        recurringMonths: data.recurringMonths,
+        recurringEndDate: data.recurringEndDate,
+        recurrenceGroupId: data.recurrenceGroupId,
+        userId: data.userId,
+        createdAt: data.createdAt.toDate(),
+      } as TransactionType;
+    })
+    .filter(transaction => 
+      transaction.category === originalTransaction.category &&
+      transaction.source === originalTransaction.source &&
+      transaction.type === originalTransaction.type &&
+      transaction.date >= originalTransaction.date
+    )
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  return filteredTransactions;
 };
