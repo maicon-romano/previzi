@@ -213,10 +213,8 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
       form.reset();
       onClose();
       
-      // Chamar callback para atualizar lista em tempo real
-      if (onTransactionAdded) {
-        onTransactionAdded();
-      }
+      // O listener em tempo real irá atualizar automaticamente a tabela
+      // Não é necessário callback manual pois o Firestore onSnapshot detecta mudanças
     } catch (error) {
       console.error("Error adding transaction:", error);
       toast.error("Erro ao salvar transação", {

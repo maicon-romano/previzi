@@ -24,7 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { ChevronLeft, ChevronRight, Calendar, Filter } from "lucide-react";
 import { motion } from "framer-motion";
-import { getTransactionsByMonth, updateTransaction, deleteTransaction } from "../utils/firebase";
+import { getTransactionsByMonth, updateTransaction, deleteTransaction, subscribeToTransactions } from "../utils/firestore";
 import { useToast } from "@/hooks/use-toast";
 import Swal from "sweetalert2";
 
