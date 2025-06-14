@@ -79,10 +79,8 @@ export default function TransactionsMonthly() {
       setTransactions(monthTransactions);
     } catch (error) {
       console.error('Erro ao carregar transações:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar as transações do mês.",
-        variant: "destructive",
+      toast.error("Erro ao carregar", {
+        description: "Não foi possível carregar as transações do mês."
       });
     } finally {
       setIsLoading(false);
@@ -102,15 +100,12 @@ export default function TransactionsMonthly() {
         )
       );
 
-      toast({
-        title: "Status atualizado",
-        description: `Transação marcada como ${newStatus === 'paid' ? 'paga' : 'pendente'}.`,
+      toast.success("Status atualizado", {
+        description: `Transação marcada como ${newStatus === 'paid' ? 'paga' : 'pendente'}.`
       });
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o status da transação.",
-        variant: "destructive",
+      toast.error("Erro ao atualizar", {
+        description: "Não foi possível atualizar o status da transação."
       });
     }
   };
@@ -474,7 +469,7 @@ export default function TransactionsMonthly() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteTransaction(transaction.id)}
+                            onClick={() => handleDeleteTransaction(transaction)}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
                             Excluir
