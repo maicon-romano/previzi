@@ -120,14 +120,16 @@ Preferred communication style: Simple, everyday language.
   - **Simulation Badges**: Visual indicators when scenarios are active across all financial displays
   - **Enhanced KPI Cards**: Added payment status breakdown to TransactionsMonthly page with 6 comprehensive metrics
 
-- **Enhanced Month Navigation with Date Picker**: Added comprehensive calendar date picker to Dashboard and Transactions pages
-  - Click on month name to open date picker popup with year and month selectors
-  - Quick selection buttons for "Mês Atual" and "Mês Anterior" 
-  - Year selector covers 5 years before to 5 years after current year
-  - Month selector displays full Portuguese month names
+- **Reusable Month/Year Picker Component**: Created unified MonthYearPicker component for consistent navigation across pages
+  - Extracted common date picker functionality into `components/MonthYearPicker.tsx`
+  - Click on month name opens popup with year and month selectors
+  - Quick selection buttons for "Mês Atual" and "Mês Anterior"
+  - Year selector covers 10-year range (5 years before/after current)
+  - Month selector displays full Portuguese month names  
   - Maintains existing arrow button navigation for step-by-step browsing
-  - Consistent date picker interface across all major pages
-  - Eliminates need for multiple clicks to reach distant months/years
+  - Identical appearance, fonts, colors and animations between Dashboard and Transactions
+  - Eliminates code duplication and ensures consistent user experience
+  - Accessible design with proper focus management and ESC key support
 
 ### June 14, 2025
 - **Critical Fixes for Infinite Recurring Transaction System**: Resolved date validation and deletion issues

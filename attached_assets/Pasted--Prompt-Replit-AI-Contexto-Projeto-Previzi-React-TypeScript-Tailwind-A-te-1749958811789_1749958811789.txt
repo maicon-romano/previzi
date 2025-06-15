@@ -1,0 +1,49 @@
+### Prompt → Replit AI
+
+> **Contexto**
+> Projeto Previzi (React + TypeScript + Tailwind).
+> A tela **Dashboard** já possui um seletor de **mês / ano** (popup com seletores de ano, mês e botões “Mês Atual” / “Mês Anterior”).
+> A tela **Transações** (`client/src/pages/Transactions.tsx`) continua só com as setas ← →.
+
+---
+
+#### Objetivo
+
+**Replicar fielmente** a experiência da Dashboard na tela Transações — permitindo que o usuário:
+
+1. Clique no nome do mês atual (ex.: “Junho 2025”) para abrir um **Date-Picker mensal**.
+2. Escolha **qualquer ano** (−5 … +5 anos a partir do ano corrente) e **qualquer mês** por nome completo em PT-BR.
+3. Use botões rápidos:
+
+   * **Mês Atual** → volta imediatamente para o mês corrente.
+   * **Mês Anterior** → vai 1 mês para trás.
+4. Continue podendo usar as setas ← → para navegação passo a passo (sem quebrar layout já existente).
+5. O componente deve atualizar o estado `selectedMonth` (no formato `"YYYY-MM"`) e disparar o listener/reload já existente.
+6. **Aparência, fontes, cores e animações** idênticas à Dashboard (mesmo componente ou um novo `MonthYearPicker` reutilizável em `components/common/`).
+
+---
+
+#### Passos sugeridos (mas fique à vontade para otimizar)
+
+1. **Extrair** o seletor de mês/ano já usado na Dashboard para `components/MonthYearPicker.tsx` (recebe props `value`, `onChange`).
+2. **Importar** e substituir o trecho que exibe apenas o nome do mês em `Transactions.tsx`:
+
+   ```tsx
+   <MonthYearPicker
+     value={selectedMonth}
+     onChange={(newMonth) => setSelectedMonth(newMonth)}
+   />
+   ```
+3. **Garantir acessibilidade**: foco inicial no seletor de ano, ESC fecha popup.
+4. **Teste** de regressão: setas continuam funcionando e não conflitam com clique no nome.
+5. Ajustar **Tailwind classes** se necessário para manter responsividade (principalmente em telas < md).
+
+---
+
+#### Critérios de aceitação
+
+* Clicar no título do mês na tela **Transações** abre exatamente o mesmo seletor visual da Dashboard.
+* Alterar mês/ano via popup atualiza imediatamente as transações exibidas (sem recarregar a página).
+* Botões “Mês Atual” / “Mês Anterior” funcionam.
+* A navegação por setas permanece operacional.
+* Experiência consistente entre Dashboard e Transações em desktop e mobile.

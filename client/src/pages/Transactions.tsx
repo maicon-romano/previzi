@@ -22,8 +22,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ChevronLeft, ChevronRight, Calendar, Filter, Edit, Trash2, Pencil, CalendarDays } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Filter, Edit, Trash2, Pencil } from "lucide-react";
+import MonthYearPicker from "../components/MonthYearPicker";
 import { motion } from "framer-motion";
 import { getTransactionsByMonth, updateTransaction, deleteTransaction, subscribeToMonthlyTransactions } from "../utils/firestore";
 import { useToast } from "@/hooks/use-toast";
@@ -301,102 +301,11 @@ export default function Transactions() {
             </Button>
             
             <div className="text-center">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    className="text-xl font-semibold text-gray-800 capitalize hover:bg-blue-50 px-4 py-2"
-                  >
-                    {getMonthName(selectedMonth)}
-                    <CalendarDays className="h-4 w-4 ml-2 text-blue-600" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-4">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-center">Selecionar Mês e Ano</h3>
-                    
-                    {/* Year selector */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 block mb-2">Ano</label>
-                      <Select 
-                        value={selectedMonth.split('-')[0]} 
-                        onValueChange={(year) => {
-                          const month = selectedMonth.split('-')[1];
-                          setSelectedMonth(`${year}-${month}`);
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 10 }, (_, i) => {
-                            const year = new Date().getFullYear() - 5 + i;
-                            return (
-                              <SelectItem key={year} value={year.toString()}>
-                                {year}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Month selector */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 block mb-2">Mês</label>
-                      <Select 
-                        value={selectedMonth.split('-')[1]} 
-                        onValueChange={(month) => {
-                          const year = selectedMonth.split('-')[0];
-                          setSelectedMonth(`${year}-${month}`);
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 12 }, (_, i) => {
-                            const monthNum = String(i + 1).padStart(2, '0');
-                            const monthName = new Date(2024, i, 1).toLocaleDateString('pt-BR', { month: 'long' });
-                            return (
-                              <SelectItem key={monthNum} value={monthNum}>
-                                {monthName}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Quick selection buttons */}
-                    <div className="flex gap-2 pt-2 border-t">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => {
-                          const now = new Date();
-                          setSelectedMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
-                        }}
-                        className="flex-1"
-                      >
-                        Mês Atual
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => {
-                          const lastMonth = new Date();
-                          lastMonth.setMonth(lastMonth.getMonth() - 1);
-                          setSelectedMonth(`${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`);
-                        }}
-                        className="flex-1"
-                      >
-                        Mês Anterior
-                      </Button>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <MonthYearPicker 
+                value={selectedMonth}
+                onChange={setSelectedMonth}
+                className="text-xl font-semibold"
+              />
             </div>
             
             <Button
