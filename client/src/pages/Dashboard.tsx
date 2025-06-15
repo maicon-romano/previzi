@@ -70,14 +70,16 @@ export default function Dashboard() {
       return acc;
     }, {} as Record<string, number>);
 
-  const pieChartData = Object.entries(categoryData).map(([category, amount]) => {
-    const percentage = totalExpenses > 0 ? (amount / totalExpenses * 100) : 0;
-    return {
-      name: category,
-      value: amount,
-      percentage: percentage.toFixed(1),
-    };
-  });
+  const pieChartData = Object.entries(categoryData)
+    .map(([category, amount]) => {
+      const percentage = totalExpenses > 0 ? (amount / totalExpenses * 100) : 0;
+      return {
+        name: category,
+        value: amount,
+        percentage: percentage.toFixed(1),
+      };
+    })
+    .sort((a, b) => parseFloat(b.percentage) - parseFloat(a.percentage)); // Sort by percentage (highest to lowest)
 
   const COLORS = ['#3B82F6', '#EF4444', '#F97316', '#EAB308', '#10B981', '#8B5CF6', '#EC4899'];
 

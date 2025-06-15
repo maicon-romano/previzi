@@ -110,6 +110,31 @@ export default function Calendar() {
         </div>
       </CardHeader>
       <CardContent className="p-6">
+        {/* Legend */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">Legenda do Calendário</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div className="flex items-center">
+              <div className="flex items-center bg-green-100 rounded px-2 py-1 mr-2">
+                <i className="fas fa-arrow-up text-green-600 text-xs mr-1"></i>
+                <span className="text-green-700 font-medium">2</span>
+              </div>
+              <span className="text-gray-600">Receitas (quantidade + valor)</span>
+            </div>
+            <div className="flex items-center">
+              <div className="flex items-center bg-red-100 rounded px-2 py-1 mr-2">
+                <i className="fas fa-arrow-down text-red-600 text-xs mr-1"></i>
+                <span className="text-red-700 font-medium">3</span>
+              </div>
+              <span className="text-gray-600">Despesas (quantidade + valor)</span>
+            </div>
+            <div className="flex items-center">
+              <div className="text-green-600 font-bold mr-2">+R$ 1.500</div>
+              <span className="text-gray-600">Saldo líquido do dia</span>
+            </div>
+          </div>
+        </div>
+
         {/* Calendar Grid */}
         <div className="grid grid-cols-7 gap-1 mb-4">
           {/* Calendar Header */}
@@ -125,44 +150,74 @@ export default function Calendar() {
           {calendarDays.map((calendarDay, index) => {
             const dayTransactions = getTransactionsForDate(calendarDay.date);
             const totalIncome = dayTransactions
-              .filter(t => t.type === 'income')
-              .reduce((sum, t) => sum + t.amount, 0);
+              .filter(t => t.type === 'income' && t.amount !== null)
+              .reduce((sum, t) => sum + (t.amount || 0), 0);
             const totalExpenses = dayTransactions
-              .filter(t => t.type === 'expense')
-              .reduce((sum, t) => sum + t.amount, 0);
+              .filter(t => t.type === 'expense' && t.amount !== null)
+              .reduce((sum, t) => sum + (t.amount || 0), 0);
             const hasTransactions = dayTransactions.length > 0;
 
             return (
               <div
                 key={index}
-                className={`h-24 p-2 border border-gray-100 rounded-lg cursor-pointer transition-colors ${
+                className={`h-32 p-2 border rounded-lg cursor-pointer transition-all duration-200 ${
                   calendarDay.isCurrentMonth
-                    ? "hover:bg-gray-50"
-                    : "bg-gray-50"
-                } ${hasTransactions ? "border-primary/20 bg-primary/5" : ""}`}
+                    ? hasTransactions 
+                      ? "border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm"
+                      : "border-gray-200 bg-white hover:bg-gray-50"
+                    : "bg-gray-100 border-gray-300"
+                } ${hasTransactions ? "transform hover:scale-105" : ""}`}
               >
-                <div className={`text-sm font-medium ${
+                <div className={`text-sm font-semibold mb-2 ${
                   calendarDay.isCurrentMonth ? "text-gray-900" : "text-gray-400"
                 }`}>
                   {calendarDay.day}
                 </div>
                 
                 {hasTransactions && (
-                  <div className="mt-1 space-y-1">
+                  <div className="space-y-1">
+                    {/* Income Section */}
                     {totalIncome > 0 && (
-                      <div className="flex items-center">
-                        <div className="w-2 h-2 bg-success-500 rounded-full mr-1"></div>
-                        <div className="text-xs text-success-600 truncate">
-                          +R${(totalIncome / 1000).toFixed(1)}k
+                      <div className="flex items-center justify-between bg-green-100 rounded px-1 py-0.5">
+                        <div className="flex items-center">
+                          <i className="fas fa-arrow-up text-green-600 text-xs mr-1"></i>
+                          <span className="text-xs font-medium text-green-700">
+                            {dayTransactions.filter(t => t.type === 'income').length}
+                          </span>
+                        </div>
+                        <div className="text-xs font-bold text-green-600">
+                          R$ {totalIncome >= 1000 
+                            ? `${(totalIncome / 1000).toFixed(1)}k` 
+                            : totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+                          }
                         </div>
                       </div>
                     )}
+                    
+                    {/* Expense Section */}
                     {totalExpenses > 0 && (
-                      <div className="flex items-center">
-                        <div className="w-2 h-2 bg-danger-500 rounded-full mr-1"></div>
-                        <div className="text-xs text-danger-600 truncate">
-                          -R${(totalExpenses / 1000).toFixed(1)}k
+                      <div className="flex items-center justify-between bg-red-100 rounded px-1 py-0.5">
+                        <div className="flex items-center">
+                          <i className="fas fa-arrow-down text-red-600 text-xs mr-1"></i>
+                          <span className="text-xs font-medium text-red-700">
+                            {dayTransactions.filter(t => t.type === 'expense').length}
+                          </span>
                         </div>
+                        <div className="text-xs font-bold text-red-600">
+                          R$ {totalExpenses >= 1000 
+                            ? `${(totalExpenses / 1000).toFixed(1)}k` 
+                            : totalExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+                          }
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Net Balance Indicator */}
+                    {(totalIncome > 0 || totalExpenses > 0) && (
+                      <div className={`text-center text-xs font-bold ${
+                        totalIncome - totalExpenses >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {totalIncome - totalExpenses >= 0 ? '+' : ''}R$ {(totalIncome - totalExpenses).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </div>
                     )}
                   </div>

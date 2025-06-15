@@ -296,11 +296,27 @@ export default function Predictability() {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center">
+                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                    <i className="fas fa-credit-card text-orange-600"></i>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600">Média de Despesa Mensal</p>
+                    <p className="text-lg font-bold text-orange-600">
+                      R$ {(summaryStats.totalExpenses / parseInt(selectedPeriod)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center">
                   <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
                     <i className="fas fa-calculator text-purple-600"></i>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-600">Média Mensal</p>
+                    <p className="text-xs text-gray-600">Média de Saldo Mensal</p>
                     <p className={`text-lg font-bold ${summaryStats.avgMonthlyBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       R$ {summaryStats.avgMonthlyBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
