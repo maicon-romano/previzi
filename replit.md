@@ -177,6 +177,12 @@ Preferred communication style: Simple, everyday language.
   - Enhanced user profile section with better typography and layout
   - Added proper logout button styling with red accent for clear action indication
 
+- **Dashboard Próximos Vencimentos Fix**: Corrected data filtering for accurate expense tracking
+  - Fixed "Próximos Vencimentos" card to show only unpaid expenses (despesas)
+  - Removed income transactions from upcoming payments display
+  - Filter now correctly shows only pending expenses with due dates
+  - Improved financial accuracy by focusing on actual bills and expenses due
+
 - **Fixed AddTransactionModal Form Reset Issue**: Implemented automatic form clearing when modal opens
   - Added useEffect to automatically reset all form fields when modal opens
   - Form now clears previous transaction data and starts fresh each time

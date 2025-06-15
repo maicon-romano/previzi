@@ -160,7 +160,7 @@ export default function Dashboard() {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
 
-  // Upcoming payments - real data from pending transactions
+  // Upcoming payments - only unpaid expenses (despesas)
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
@@ -168,7 +168,7 @@ export default function Dashboard() {
     .filter(t => {
       const transactionDate = new Date(t.date);
       transactionDate.setHours(0, 0, 0, 0);
-      return t.status === "pending" && transactionDate >= today;
+      return t.type === "expense" && t.status === "pending" && transactionDate >= today;
     })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 5)
