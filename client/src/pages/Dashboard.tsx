@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { useTransactions } from "../hooks/useTransactions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -307,15 +308,24 @@ export default function Dashboard() {
                           ))}
                         </Pie>
                         <Tooltip 
-                          formatter={(value, name, props) => [
-                            `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-                            `${props.payload.percentage}%`
-                          ]}
-                          contentStyle={{
-                            backgroundColor: 'white',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '8px',
-                            fontSize: '14px'
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload;
+                              return (
+                                <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                                  <p className="font-semibold text-gray-900 mb-2">{data.name}</p>
+                                  <div className="space-y-1">
+                                    <p className="text-sm font-medium text-gray-700">
+                                      Valor: R$ {Number(data.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </p>
+                                    <p className="text-sm font-medium text-gray-700">
+                                      Percentual: {data.percentage}%
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
                           }}
                         />
                       </PieChart>
@@ -517,10 +527,12 @@ export default function Dashboard() {
                   <i className="fas fa-receipt text-purple-600 text-sm"></i>
                   Transações Recentes
                 </CardTitle>
-                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
-                  <i className="fas fa-arrow-right mr-1"></i>
-                  Ver todas
-                </Button>
+                <Link href="/transactions">
+                  <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                    <i className="fas fa-arrow-right mr-1"></i>
+                    Ver todas
+                  </Button>
+                </Link>
               </div>
             </CardHeader>
             <CardContent>

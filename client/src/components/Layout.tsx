@@ -25,7 +25,7 @@ export default function Layout({ children }: LayoutProps) {
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: "fas fa-home" },
     { name: "Transações", href: "/transactions", icon: "fas fa-exchange-alt" },
-    { name: "Previsibilidade", href: "/predictability", icon: "fas fa-crystal-ball" },
+    { name: "Previsibilidade", href: "/predictability", icon: "fas fa-chart-line" },
     { name: "Calendário", href: "/calendar", icon: "fas fa-calendar-alt" },
     { name: "Categorias", href: "/categories", icon: "fas fa-tags" },
     { name: "Configurações", href: "/settings", icon: "fas fa-cog" },
@@ -48,50 +48,54 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 bg-white shadow-lg border-r border-gray-200 transform transition-all duration-300 ease-in-out ${
+      <div className={`fixed inset-y-0 left-0 z-50 bg-gradient-to-b from-blue-50 to-white shadow-xl border-r border-blue-100 transform transition-all duration-300 ease-in-out ${
         isSidebarCollapsed ? "w-16" : "w-64"
       } ${
         isSidebarOpen ? "translate-x-0" : "-translate-x-full"
       } lg:translate-x-0`}>
         <div className="flex flex-col h-full">
           {/* Logo and Collapse Button */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+          <div className="flex items-center justify-between px-4 py-4 border-b border-blue-100 bg-white/50">
             <div className="flex items-center">
-              <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg mr-2">
-                <i className="fas fa-chart-line text-white text-sm"></i>
+              <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl mr-3 shadow-md">
+                <i className="fas fa-chart-line text-white text-lg"></i>
               </div>
               {!isSidebarCollapsed && (
-                <h1 className="text-lg font-bold text-gray-900">Previzi</h1>
+                <h1 className="text-xl font-bold text-gray-800">Previzi</h1>
               )}
             </div>
             <button
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="hidden lg:flex w-6 h-6 items-center justify-center rounded-md hover:bg-gray-100 transition-colors"
+              className="hidden lg:flex w-8 h-8 items-center justify-center rounded-lg hover:bg-blue-100 transition-all duration-200 border border-blue-200"
             >
-              <i className={`fas ${isSidebarCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'} text-xs text-gray-500`}></i>
+              <i className={`fas ${isSidebarCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'} text-sm text-blue-600`}></i>
             </button>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-3">
-            <ul className="space-y-1">
+          <nav className="flex-1 px-3 py-4">
+            <ul className="space-y-2">
               {navigation.map((item) => {
                 const isActive = location === item.href || (location === "/" && item.href === "/dashboard");
                 return (
                   <li key={item.name}>
                     <Link
                       href={item.href}
-                      className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors group relative ${
+                      className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 group relative ${
                         isActive
-                          ? "bg-primary/10 text-primary"
-                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                          ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg"
+                          : "text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:shadow-md"
                       }`}
                       title={isSidebarCollapsed ? item.name : ""}
                     >
-                      <i className={`${item.icon} ${isSidebarCollapsed ? 'mx-auto' : 'mr-2'} text-sm`}></i>
-                      {!isSidebarCollapsed && item.name}
+                      <i className={`${item.icon} ${isSidebarCollapsed ? 'mx-auto' : 'mr-3'} text-base ${
+                        isActive ? 'text-white' : 'text-blue-600'
+                      }`}></i>
+                      {!isSidebarCollapsed && (
+                        <span className="font-medium">{item.name}</span>
+                      )}
                       {isSidebarCollapsed && (
-                        <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                        <div className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
                           {item.name}
                         </div>
                       )}
