@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "sonner";
@@ -17,55 +17,55 @@ import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
-    <Switch>
-      <Route path="/auth" component={AuthPage} />
-      <Route path="/dashboard">
+    <Routes>
+      <Route path="/auth" element={<AuthPage />} />
+      <Route path="/dashboard" element={
         <ProtectedRoute>
           <Dashboard />
         </ProtectedRoute>
-      </Route>
-      <Route path="/transactions">
+      } />
+      <Route path="/transactions" element={
         <ProtectedRoute>
           <TransactionsMonthly />
         </ProtectedRoute>
-      </Route>
-
-      <Route path="/predictability">
+      } />
+      <Route path="/predictability" element={
         <ProtectedRoute>
           <Predictability />
         </ProtectedRoute>
-      </Route>
-      <Route path="/calendar">
+      } />
+      <Route path="/calendar" element={
         <ProtectedRoute>
           <Calendar />
         </ProtectedRoute>
-      </Route>
-      <Route path="/categories">
+      } />
+      <Route path="/categories" element={
         <ProtectedRoute>
           <Categories />
         </ProtectedRoute>
-      </Route>
-      <Route path="/settings">
+      } />
+      <Route path="/settings" element={
         <ProtectedRoute>
           <Settings />
         </ProtectedRoute>
-      </Route>
-      <Route path="/">
+      } />
+      <Route path="/" element={
         <ProtectedRoute>
           <Dashboard />
         </ProtectedRoute>
-      </Route>
-      <Route component={NotFound} />
-    </Switch>
+      } />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Router />
+      <BrowserRouter>
+        <AuthProvider>
+          <TooltipProvider>
+            <Router />
           <Toaster 
             position="bottom-right"
             expand={false}

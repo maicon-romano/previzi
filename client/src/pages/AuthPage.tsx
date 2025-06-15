@@ -58,7 +58,7 @@ export default function AuthPage() {
     setIsLoading(true);
     try {
       await login(data.email, data.password);
-      setLocation("/dashboard");
+      navigate("/dashboard");
     } catch (error: any) {
       toast({
         title: "Erro no login",
@@ -74,7 +74,7 @@ export default function AuthPage() {
     setIsLoading(true);
     try {
       await register(data.email, data.password, data.name);
-      setLocation("/dashboard");
+      navigate("/dashboard");
     } catch (error: any) {
       toast({
         title: "Erro no cadastro",
@@ -90,7 +90,7 @@ export default function AuthPage() {
     setIsLoading(true);
     try {
       await loginWithGoogle();
-      setLocation("/dashboard");
+      // Navigation will be handled by AuthContext after redirect
     } catch (error: any) {
       toast({
         title: "Erro no login com Google",

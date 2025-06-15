@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link } from "react-router-dom";
 import { useTransactions } from "../hooks/useTransactions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -599,7 +599,7 @@ export default function Dashboard() {
                   <i className="fas fa-receipt text-purple-600 text-sm"></i>
                   Transações Recentes
                 </CardTitle>
-                <Link href="/transactions">
+                <Link to="/transactions">
                   <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
                     <i className="fas fa-arrow-right mr-1"></i>
                     Ver todas
