@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { ChevronLeft, ChevronRight, Calendar, Filter, Edit, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Filter, Edit, Trash2, Pencil } from "lucide-react";
 import { motion } from "framer-motion";
 import { getTransactionsByMonth, updateTransaction, deleteTransaction, subscribeToMonthlyTransactions } from "../utils/firestore";
 import { useToast } from "@/hooks/use-toast";
@@ -357,9 +357,17 @@ export default function Transactions() {
                         <div className="flex flex-col">
                           <span className="font-medium">{transaction.description}</span>
                           {transaction.recurring && (
-                            <Badge variant="secondary" className="w-fit mt-1 text-xs">
-                              Recorrente
-                            </Badge>
+                            <div className="flex gap-1 mt-1">
+                              {transaction.isVariableAmount ? (
+                                <Badge variant="secondary" className="text-xs">
+                                  Recorrente Variável
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs">
+                                  Recorrente
+                                </Badge>
+                              )}
+                            </div>
                           )}
                         </div>
                       </TableCell>
@@ -369,11 +377,28 @@ export default function Transactions() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <span className={`font-bold ${
-                          transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {transaction.type === 'income' ? '+' : '-'}R$ {(transaction.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </span>
+                        {transaction.amount !== null ? (
+                          <span className={`font-bold ${
+                            transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {transaction.type === 'income' ? '+' : '-'}R$ {transaction.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-400 italic">Valor não definido</span>
+                            {transaction.recurring && transaction.isVariableAmount && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-orange-500 hover:text-orange-600 hover:bg-orange-50"
+                                onClick={() => handleEditTransaction(transaction)}
+                                title="Definir valor para este mês"
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">

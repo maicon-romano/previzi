@@ -1,0 +1,81 @@
+Preciso de três ajustes importantes no sistema Previzi:
+
+---
+
+🟢 PARTE 1: MÊS PADRÃO DE ABERTURA → SEMPRE O MÊS ATUAL
+
+Problema atual:  
+Quando o usuário acessa a tela de Transações ou qualquer outra página com navegação por mês, o sistema carrega o mês de criação da transação ou um mês fixo.
+
+✅ O que quero:  
+Sempre que o usuário abrir a página:
+
+- O sistema deve automaticamente detectar a data atual do navegador (local timezone).
+- A página deve abrir direto no mês atual.
+
+Exemplo de código que pode usar:
+
+```ts
+const now = new Date();
+const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+setSelectedMonth(currentMonth);
+````
+
+Isso deve funcionar para todas as páginas: **Dashboard**, **Transações**, **Previsibilidade**, etc.
+
+---
+
+🟢 PARTE 2: IDENTIFICAÇÃO VISUAL DE TRANSAÇÕES RECORRENTES VARIÁVEIS
+
+Problema atual:
+Transações recorrentes que são variáveis (`isVariableAmount: true`) não possuem nenhuma tag visual diferenciada.
+
+✅ O que quero:
+
+* Adicionar uma `Badge` ou Tag com o nome **"Recorrente Variável"**, com estilo visual semelhante ao badge de "Recorrente".
+
+Exemplo visual:
+
+```tsx
+{transaction.recurring && transaction.isVariableAmount && (
+  <Badge variant="secondary" className="w-fit mt-1 text-xs">
+    Recorrente Variável
+  </Badge>
+)}
+```
+
+---
+
+🟢 PARTE 3: EXIBIÇÃO DE AVISO QUANDO O VALOR NÃO FOI DEFINIDO PARA UMA TRANSAÇÃO VARIÁVEL
+
+Problema atual:
+Transações recorrentes variáveis aparecem sem o valor definido, mas o usuário não tem um indicativo claro de que precisa definir manualmente o valor daquele mês.
+
+✅ O que quero:
+
+* Toda transação marcada como `recurring: true` e `isVariableAmount: true` deve seguir o seguinte comportamento:
+
+**Se o campo `amount` for `null` ou `undefined`:**
+
+👉 Exibir um botão/ícone de aviso (ex: um ícone de lápis ou alerta) ao lado do campo de valor.
+
+👉 Exemplo de texto hover: **"Definir valor para este mês"**
+
+👉 Ao clicar, abrir o modal de edição daquela transação.
+
+**Se o valor já estiver definido:**
+👉 Mostrar o valor normalmente, como já faz.
+
+---
+
+✅ Resumo Final:
+
+✅ Ao abrir a página, o sistema deve carregar o mês atual (timezone local).
+
+✅ Exibir um badge "Recorrente Variável" para transações com `recurring: true` e `isVariableAmount: true`.
+
+✅ Mostrar um botão/alerta nas transações variáveis que ainda não possuem valor definido, para facilitar que o usuário defina o valor daquele mês.
+
+Tecnologias: React, Tailwind CSS, Firebase Firestore.
+
+O objetivo é melhorar a usabilidade, experiência visual e lógica de gestão das transações recorrentes variáveis.

@@ -130,6 +130,20 @@ Preferred communication style: Simple, everyday language.
   - Clear distinction between infinite and fixed-term recurring transactions
   - Better user feedback with accurate descriptions for each type
 
+- **Enhanced User Experience for Variable Recurring Transactions**: Improved visual identification and management
+  - Added "Recorrente Variável" badge for transactions with `recurring: true` and `isVariableAmount: true`
+  - Distinguished from regular recurring transactions with different badge styling
+  - Implemented warning button (pencil icon) for undefined values in variable transactions
+  - Added hover tooltip "Definir valor para este mês" for clarity
+  - One-click access to edit modal for setting monthly values
+  - Applied consistently across Transactions and TransactionsMonthly pages
+
+- **Default Month Navigation Enhancement**: All pages now open to current month
+  - System automatically detects browser's current date and timezone
+  - Pages load directly to current month instead of fixed or creation month
+  - Consistent behavior across Dashboard, Transactions, and Predictability pages
+  - Improved user workflow by starting with most relevant timeframe
+
 - **Fixed AddTransactionModal Form Reset Issue**: Implemented automatic form clearing when modal opens
   - Added useEffect to automatically reset all form fields when modal opens
   - Form now clears previous transaction data and starts fresh each time

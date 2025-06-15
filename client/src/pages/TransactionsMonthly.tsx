@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { ChevronLeft, ChevronRight, Calendar, Filter, Search, Plus, Trash2, Edit } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Filter, Search, Plus, Trash2, Edit, Pencil, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { getTransactionsByMonth, updateTransaction, deleteTransaction, parseMonthString, subscribeToMonthlyTransactions, deleteRecurringTransactionWithOptions } from "../utils/firestore";
 import { toast } from "sonner";
@@ -468,9 +468,15 @@ export default function TransactionsMonthly() {
                           )}
                           {transaction.recurring && (
                             <div className="flex gap-1 mt-1">
-                              <Badge variant="outline" className="text-xs">
-                                Recorrente
-                              </Badge>
+                              {transaction.isVariableAmount ? (
+                                <Badge variant="secondary" className="text-xs">
+                                  Recorrente Variável
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs">
+                                  Recorrente
+                                </Badge>
+                              )}
                             </div>
                           )}
                         </div>
@@ -489,7 +495,20 @@ export default function TransactionsMonthly() {
                             {transaction.type === 'income' ? '+' : '-'}R$ {transaction.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </span>
                         ) : (
-                          <span className="text-gray-400 italic">Valor não definido</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-400 italic">Valor não definido</span>
+                            {transaction.recurring && transaction.isVariableAmount && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-orange-500 hover:text-orange-600 hover:bg-orange-50"
+                                onClick={() => handleEditTransaction(transaction)}
+                                title="Definir valor para este mês"
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
                         )}
                       </TableCell>
                       <TableCell>
