@@ -94,12 +94,23 @@ export const getTransactions = async (userId: string): Promise<TransactionType[]
     const data = doc.data();
     return {
       id: doc.id,
-      ...data,
+      type: data.type,
+      amount: data.amount,
+      category: data.category,
+      description: data.description,
+      source: data.source,
+      status: data.status,
+      recurring: data.recurring,
+      isVariableAmount: data.isVariableAmount,
+      recurringType: data.recurringType,
+      recurringMonths: data.recurringMonths,
+      recurringEndDate: data.recurringEndDate,
+      recurrenceGroupId: data.recurrenceGroupId,
+      userId: data.userId,
       date: data.date.toDate(),
       createdAt: data.createdAt.toDate(),
-      originalDate: data.originalDate ? data.originalDate.toDate() : undefined,
-    };
-  }) as TransactionType[];
+    } as TransactionType;
+  });
 };
 
 // Nova função para buscar transações por mês (sem orderBy para evitar erro de índice)
@@ -114,12 +125,23 @@ export const getTransactionsByMonth = async (userId: string, monthRef: string): 
     const data = doc.data();
     return {
       id: doc.id,
-      ...data,
+      type: data.type,
+      amount: data.amount,
+      category: data.category,
+      description: data.description,
+      source: data.source,
+      status: data.status,
+      recurring: data.recurring,
+      isVariableAmount: data.isVariableAmount,
+      recurringType: data.recurringType,
+      recurringMonths: data.recurringMonths,
+      recurringEndDate: data.recurringEndDate,
+      recurrenceGroupId: data.recurrenceGroupId,
+      userId: data.userId,
       date: data.date.toDate(),
       createdAt: data.createdAt.toDate(),
-      originalDate: data.originalDate ? data.originalDate.toDate() : undefined,
-    };
-  }) as TransactionType[];
+    } as TransactionType;
+  });
   
   // Ordenar no cliente para evitar erro de índice
   return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -134,9 +156,7 @@ export const updateTransaction = async (userId: string, transactionId: string, u
     // Atualizar monthRef quando a data for alterada
     updateData.monthRef = `${updates.date.getFullYear()}-${String(updates.date.getMonth() + 1).padStart(2, '0')}`;
   }
-  if (updates.originalDate) {
-    updateData.originalDate = Timestamp.fromDate(updates.originalDate);
-  }
+
   
   await updateDoc(transactionRef, updateData);
 };

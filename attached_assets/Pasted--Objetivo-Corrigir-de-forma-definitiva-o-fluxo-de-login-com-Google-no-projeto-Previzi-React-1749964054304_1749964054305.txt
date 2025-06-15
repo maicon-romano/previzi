@@ -1,0 +1,67 @@
+
+
+**Objetivo:** Corrigir de forma definitiva o fluxo de login com Google no projeto Previzi (React + Firebase + Vite + Firebase Hosting), incluindo todos os pontos abaixo:
+
+---
+
+✅ **1. Corrigir o fluxo de autenticação com Google (Redirect Flow):**
+
+* Garantir que `signInWithRedirect()` + `getRedirectResult()` estejam funcionando perfeitamente em produção (Firebase Hosting).
+* O `currentUser` precisa ser carregado corretamente após o redirect (na primeira renderização).
+* O usuário precisa voltar autenticado e a sessão deve persistir.
+
+---
+
+✅ **2. Corrigir o problema de API Key inválida:**
+
+* O erro `API key not valid. Please pass a valid API key.` precisa ser resolvido.
+* Revisar e garantir que o arquivo `.env` está sendo carregado corretamente (variáveis VITE\_FIREBASE\_API\_KEY, etc).
+* Corrigir o `firebase.ts` para nunca deixar `default_key` como fallback em produção.
+
+---
+
+✅ **3. Corrigir problemas de CORS / COOP / Headers:**
+
+* Resolver os erros de **Cross-Origin-Opener-Policy** que estavam bloqueando o popup.
+* Garantir que o `firebase.json` tenha as configurações corretas de headers (incluindo `"Cross-Origin-Opener-Policy": "same-origin-allow-popups"` e `"Cross-Origin-Embedder-Policy": "unsafe-none"` se necessário).
+
+---
+
+✅ **4. Garantir que tudo funciona no Firebase Hosting e também no subdomínio customizado (financas.previzi.com.br):**
+
+* Revisar e validar a configuração de Authorized Domains no painel do Firebase.
+* Validar a comunicação Auth na URL `https://previzi-54773.web.app` e também no `https://financas.previzi.com.br`.
+* Se precisar, criar redirects ou reconfigurar o domínio dentro do painel Firebase Auth > Authorized Domains.
+
+---
+
+✅ **5. Ajustar a inicialização do Firebase (firebase.ts):**
+
+* Corrigir o problema de múltiplas instâncias do Firebase App (evitar o erro "Firebase app already exists").
+* Se precisar, usar:
+
+```ts
+import { initializeApp, getApps, getApp } from "firebase/app";
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+```
+
+---
+
+✅ **6. Confirmar que o Vite está lendo o .env corretamente:**
+
+* Verificar se o build final (`npm run build`) gera a aplicação com as variáveis corretas.
+* Se não, ajustar o `vite.config.ts` para garantir carregamento do `.env`.
+
+---
+
+✅ **7. Teste final:**
+Fazer um deploy no Firebase (`firebase deploy`), acessar o projeto na URL final, testar o fluxo de login com Google do início ao fim.
+
+---
+
+**Referência:**
+Repositório: [https://github.com/maicon-romano/previzi](https://github.com/maicon-romano/previzi)
+Domínio customizado: [https://financas.previzi.com.br](https://financas.previzi.com.br)
+Hosting Firebase: [https://previzi-54773.web.app](https://previzi-54773.web.app)
+
+

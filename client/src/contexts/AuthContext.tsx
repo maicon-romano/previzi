@@ -63,27 +63,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
+    let isMounted = true;
+
     // Handle redirect result when user returns from Google auth
     const handleRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
-        if (result) {
+        if (result && isMounted) {
           // User successfully signed in via redirect
-          console.log('Google sign-in successful via redirect');
+          console.log('Google sign-in successful via redirect:', result.user.email);
+          // The onAuthStateChanged will handle setting the user
         }
       } catch (error) {
         console.error('Error handling redirect result:', error);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
-    handleRedirectResult();
-
+    // Handle authentication state changes
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setLoading(false);
+      if (isMounted) {
+        setCurrentUser(user);
+        setLoading(false);
+      }
     });
 
-    return unsubscribe;
+    // Check for redirect result first, then set up auth listener
+    handleRedirectResult();
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const value = {
