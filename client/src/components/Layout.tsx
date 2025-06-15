@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "wouter";
 import { useAuth } from "../contexts/AuthContext";
 import AddTransactionModal from "./AddTransactionModal";
 
@@ -9,7 +9,7 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const { currentUser, logout } = useAuth();
-  const location = useLocation();
+  const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,7 +40,7 @@ export default function Layout({ children }: LayoutProps) {
       "/categories": { title: "Categorias", subtitle: "Organize suas categorias de receitas e despesas" },
       "/settings": { title: "Configurações", subtitle: "Personalize sua experiência" },
     };
-    return titles[location.pathname] || titles["/dashboard"];
+    return titles[location] || titles["/dashboard"];
   };
 
   const pageInfo = getPageInfo();
@@ -76,11 +76,11 @@ export default function Layout({ children }: LayoutProps) {
           <nav className="flex-1 px-3 py-4">
             <ul className="space-y-2">
               {navigation.map((item) => {
-                const isActive = location.pathname === item.href || (location.pathname === "/" && item.href === "/dashboard");
+                const isActive = location === item.href || (location === "/" && item.href === "/dashboard");
                 return (
                   <li key={item.name}>
                     <Link
-                      to={item.href}
+                      href={item.href}
                       className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 group relative ${
                         isActive
                           ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg"

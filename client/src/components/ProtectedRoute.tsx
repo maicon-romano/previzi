@@ -1,5 +1,6 @@
 import { useAuth } from "../contexts/AuthContext";
-import { Navigate } from "react-router-dom";
+import { useLocation } from "wouter";
+import { useEffect } from "react";
 import Layout from "./Layout";
 
 interface ProtectedRouteProps {
@@ -8,9 +9,16 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { currentUser } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!currentUser) {
+      setLocation("/auth");
+    }
+  }, [currentUser, setLocation]);
 
   if (!currentUser) {
-    return <Navigate to="/auth" replace />;
+    return null;
   }
 
   return <Layout>{children}</Layout>;

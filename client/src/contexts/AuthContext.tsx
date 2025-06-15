@@ -7,8 +7,7 @@ import {
   onAuthStateChanged,
   sendPasswordResetEmail,
   updateProfile,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   GoogleAuthProvider
 } from "firebase/auth";
 import { auth } from "../firebase";
@@ -48,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function loginWithGoogle() {
     const provider = new GoogleAuthProvider();
-    await signInWithRedirect(auth, provider);
+    await signInWithPopup(auth, provider);
   }
 
   async function logout() {
@@ -64,21 +63,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setCurrentUser(user);
       setLoading(false);
     });
-
-    // Handle Google redirect result when the user returns from Google OAuth
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) {
-          // User signed in successfully via redirect
-          setCurrentUser(result.user);
-          // Redirect to dashboard after successful login
-          window.location.href = '/dashboard';
-        }
-      })
-      .catch((error) => {
-        console.error('Error handling redirect result:', error);
-        setLoading(false);
-      });
 
     return unsubscribe;
   }, []);

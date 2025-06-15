@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,7 +31,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
   const { login, register, resetPassword, loginWithGoogle } = useAuth();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
@@ -58,7 +58,7 @@ export default function AuthPage() {
     setIsLoading(true);
     try {
       await login(data.email, data.password);
-      navigate("/dashboard");
+      setLocation("/dashboard");
     } catch (error: any) {
       toast({
         title: "Erro no login",
@@ -74,7 +74,7 @@ export default function AuthPage() {
     setIsLoading(true);
     try {
       await register(data.email, data.password, data.name);
-      navigate("/dashboard");
+      setLocation("/dashboard");
     } catch (error: any) {
       toast({
         title: "Erro no cadastro",
@@ -90,7 +90,7 @@ export default function AuthPage() {
     setIsLoading(true);
     try {
       await loginWithGoogle();
-      // Navigation will be handled by AuthContext after redirect
+      setLocation("/dashboard");
     } catch (error: any) {
       toast({
         title: "Erro no login com Google",
