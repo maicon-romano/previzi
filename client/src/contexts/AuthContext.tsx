@@ -11,6 +11,7 @@ import {
   getRedirectResult,
   GoogleAuthProvider,
 } from "firebase/auth";
+import { useLocation } from "wouter";
 import { auth } from "../firebase";
 
 interface AuthContextType {
@@ -36,6 +37,7 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [, setLocation] = useLocation();
 
   async function register(email: string, password: string, name: string) {
     const { user } = await createUserWithEmailAndPassword(
@@ -52,9 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function loginWithGoogle() {
     const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({
-      prompt: "select_account",
-    });
+    provider.setCustomParameters({ prompt: "select_account" });
     await signInWithRedirect(auth, provider);
   }
 
@@ -71,11 +71,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const result = await getRedirectResult(auth);
         if (result?.user) {
-          console.log("Google sign-in successful via redirect");
+          console.log("✅ Google redirect login successful");
           setCurrentUser(result.user);
+          setLocation("/dashboard"); // Redireciona para dashboard após login com Google
         }
       } catch (error) {
-        console.error("Error handling redirect result:", error);
+        console.error("❌ Error handling Google redirect result:", error);
       }
     };
 
@@ -87,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return unsubscribe;
-  }, []);
+  }, [setLocation]);
 
   const value = {
     currentUser,

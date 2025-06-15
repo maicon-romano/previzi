@@ -1,11 +1,7 @@
 {
   "hosting": {
     "public": "dist",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
         "source": "**",
@@ -21,7 +17,7 @@
             "value": "same-origin-allow-popups"
           },
           {
-            "key": "Cross-Origin-Embedder-Policy", 
+            "key": "Cross-Origin-Embedder-Policy",
             "value": "unsafe-none"
           }
         ]
