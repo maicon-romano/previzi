@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { 
-  User, 
+import {
+  User,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
@@ -9,7 +9,7 @@ import {
   updateProfile,
   signInWithRedirect,
   getRedirectResult,
-  GoogleAuthProvider
+  GoogleAuthProvider,
 } from "firebase/auth";
 import { auth } from "../firebase";
 
@@ -38,7 +38,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   async function register(email: string, password: string, name: string) {
-    const { user } = await createUserWithEmailAndPassword(auth, email, password);
+    const { user } = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
     await updateProfile(user, { displayName: name });
   }
 
@@ -49,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function loginWithGoogle() {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({
-      prompt: 'select_account'
+      prompt: "select_account",
     });
     await signInWithRedirect(auth, provider);
   }
@@ -63,16 +67,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    // Handle redirect result when user returns from Google auth
     const handleRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
-        if (result) {
-          // User successfully signed in via redirect
-          console.log('Google sign-in successful via redirect');
+        if (result?.user) {
+          console.log("Google sign-in successful via redirect");
+          setCurrentUser(result.user);
         }
       } catch (error) {
-        console.error('Error handling redirect result:', error);
+        console.error("Error handling redirect result:", error);
       }
     };
 
