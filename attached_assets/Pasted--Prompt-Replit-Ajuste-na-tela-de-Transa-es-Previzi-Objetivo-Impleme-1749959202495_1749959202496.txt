@@ -1,0 +1,62 @@
+
+
+### 🎯 Prompt Replit - Ajuste na tela de Transações (Previzi)
+
+---
+
+✅ **Objetivo:**
+Implementar na tela de **Transações (`Transactions.tsx`)** exatamente a mesma experiência de navegação por mês e ano que já existe na **Dashboard (`Dashboard.tsx`)**.
+
+---
+
+✅ **Requisitos:**
+
+1. **Adicionar o Date Picker Completo na tela de Transações:**
+
+   * Deve permitir:
+
+     * Navegar por **mês anterior** e **mês seguinte** (já existe hoje).
+     * **Selecionar qualquer mês e ano** através de um **popup de seleção** (igual ao print da dashboard).
+     * Exibir opções rápidas:
+       ✅ Botão “Mês Atual”
+       ✅ Botão “Mês Anterior”
+       ✅ Dropdown de Ano (cobrir pelo menos -5 a +5 anos do ano atual)
+       ✅ Dropdown de Mês (com os nomes dos meses em português)
+
+2. **UX/UI:**
+
+   * A interface visual deve seguir exatamente o mesmo padrão, estilo e animação do seletor de data da Dashboard.
+   * O **componente de seleção** pode ser extraído ou reutilizado da tela `Dashboard.tsx` (evitar duplicar lógica).
+
+3. **Integração com o estado da tela de Transações:**
+
+   * O estado de `selectedMonth` e `selectedYear` da página de Transações deve atualizar corretamente ao selecionar a nova data.
+   * O filtro de exibição das transações do mês deve se ajustar automaticamente ao novo mês/ano escolhido.
+
+4. **Performance e Manutenção:**
+
+   * Se possível, extraia o seletor de mês/ano para um **componente reutilizável global**, tipo:
+     `components/MonthYearPicker.tsx`
+     Assim, ambas as telas (Dashboard e Transações) usam o mesmo componente no futuro.
+
+---
+
+✅ **Contexto para o Dev Replit:**
+A funcionalidade que já existe na Dashboard é um seletor de mês/ano via popup ao clicar no nome do mês. Atualmente, na tela de Transações, só temos a navegação de mês anterior/próximo e **não existe o Date Picker visual**.
+
+O usuário precisa selecionar rapidamente qualquer mês/ano na tela de transações também.
+
+---
+
+✅ **Nome da Página Alvo:**
+`client/src/pages/Transactions.tsx`
+
+✅ **Exemplo Visual:**
+\[Imagem de exemplo foi enviada no chat com o ChatGPT mostrando o Date Picker da Dashboard.]
+
+---
+
+### ✅ Resultado esperado após o ajuste:
+
+* A tela de Transações terá **as mesmas opções visuais e funcionais** de seleção de mês e ano que já existem na Dashboard.
+ 
