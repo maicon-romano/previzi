@@ -119,6 +119,17 @@ Preferred communication style: Simple, everyday language.
   - Comprehensive logging tracks generation and deletion operations
   - System maintains data integrity across all temporal operations
 
+- **Fixed Date Saving Issue**: Corrected timezone problems when saving transaction dates
+  - Date input now correctly saves the selected date without day shift
+  - Implemented proper date parsing to avoid browser timezone adjustments
+  - Transactions now save with accurate date information as selected by user
+
+- **Improved Infinite Recurring Transaction Messages**: Removed misleading "12 months" reference
+  - Infinite recurring transactions now show appropriate "infinite" messaging
+  - Fixed recurring transactions show specific duration (months or end date)
+  - Clear distinction between infinite and fixed-term recurring transactions
+  - Better user feedback with accurate descriptions for each type
+
 - **Fixed AddTransactionModal Form Reset Issue**: Implemented automatic form clearing when modal opens
   - Added useEffect to automatically reset all form fields when modal opens
   - Form now clears previous transaction data and starts fresh each time

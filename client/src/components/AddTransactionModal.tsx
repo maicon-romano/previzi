@@ -192,7 +192,9 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
 
     setIsLoading(true);
     try {
-      const transactionDate = new Date(data.date);
+      // Corrigir problema de fuso horário ao criar data
+      const dateParts = data.date.split('-');
+      const transactionDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
       const monthRef = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
       
       // Para transações recorrentes com valor variável, permitir amount como null
@@ -240,11 +242,23 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
 
       await addTransaction(currentUser.uid, transactionData);
 
-      // Feedback específico para transações recorrentes com duração
+      // Feedback específico para transações recorrentes
       if (transactionData.recurring) {
-        let durationText = "próximos 12 meses"; // Padrão para infinita
-        
-        if (data.recurringType === "fixed") {
+        if (data.recurringType === "infinite") {
+          // Para transações infinitas, não mencionar período específico
+          if (transactionData.isVariableAmount) {
+            toast.success("Transação Recorrente Infinita Criada", {
+              description: "Transação infinita criada. Você pode definir os valores mensalmente conforme necessário.",
+            });
+          } else {
+            toast.success("Transação Recorrente Infinita Criada", {
+              description: "Transação principal criada e será replicada automaticamente a cada mês!",
+            });
+          }
+        } else {
+          // Para transações fixas, mostrar duração específica
+          let durationText = "";
+          
           if (data.recurringMonths && data.recurringMonths.trim()) {
             const months = parseInt(data.recurringMonths);
             durationText = `próximos ${months} ${months === 1 ? 'mês' : 'meses'}`;
@@ -252,16 +266,16 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
             const endDate = new Date(data.recurringEndDate);
             durationText = `até ${endDate.toLocaleDateString('pt-BR')}`;
           }
-        }
 
-        if (transactionData.isVariableAmount) {
-          toast.success("Transação Recorrente Variável Criada", {
-            description: `Transação criada para os ${durationText}. Você pode definir os valores mensalmente.`,
-          });
-        } else {
-          toast.success("Transação Recorrente Criada", {
-            description: `Transação principal criada e replicada automaticamente para os ${durationText}!`,
-          });
+          if (transactionData.isVariableAmount) {
+            toast.success("Transação Recorrente Criada", {
+              description: `Transação criada para os ${durationText}. Você pode definir os valores mensalmente.`,
+            });
+          } else {
+            toast.success("Transação Recorrente Criada", {
+              description: `Transação principal criada e replicada automaticamente para os ${durationText}!`,
+            });
+          }
         }
       } else {
         toast.success("Transação adicionada", {
