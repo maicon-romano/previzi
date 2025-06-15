@@ -17,6 +17,10 @@ import { TransactionType, CategoryType, SourceType } from "../types";
 
 // Transaction utilities
 export const addTransaction = async (userId: string, transaction: Omit<TransactionType, "id" | "userId" | "createdAt">) => {
+  if (!db) {
+    throw new Error('Firebase not initialized. Please configure Firebase environment variables.');
+  }
+
   const transactionData = {
     type: transaction.type,
     amount: transaction.amount,
@@ -84,6 +88,10 @@ export const generateRecurringTransactions = async (userId: string, originalId: 
 };
 
 export const getTransactions = async (userId: string): Promise<TransactionType[]> => {
+  if (!db) {
+    throw new Error('Firebase not initialized. Please configure Firebase environment variables.');
+  }
+
   const q = query(
     collection(db, "users", userId, "transactions"),
     orderBy("date", "desc")
@@ -115,6 +123,10 @@ export const getTransactions = async (userId: string): Promise<TransactionType[]
 
 // Nova função para buscar transações por mês (sem orderBy para evitar erro de índice)
 export const getTransactionsByMonth = async (userId: string, monthRef: string): Promise<TransactionType[]> => {
+  if (!db) {
+    throw new Error('Firebase not initialized. Please configure Firebase environment variables.');
+  }
+
   const q = query(
     collection(db, "users", userId, "transactions"),
     where("monthRef", "==", monthRef)
@@ -148,6 +160,10 @@ export const getTransactionsByMonth = async (userId: string, monthRef: string): 
 };
 
 export const updateTransaction = async (userId: string, transactionId: string, updates: Partial<TransactionType>) => {
+  if (!db) {
+    throw new Error('Firebase not initialized. Please configure Firebase environment variables.');
+  }
+
   const transactionRef = doc(db, "users", userId, "transactions", transactionId);
   
   const updateData: any = { ...updates };
@@ -162,12 +178,20 @@ export const updateTransaction = async (userId: string, transactionId: string, u
 };
 
 export const deleteTransaction = async (userId: string, transactionId: string) => {
+  if (!db) {
+    throw new Error('Firebase not initialized. Please configure Firebase environment variables.');
+  }
+
   const transactionRef = doc(db, "users", userId, "transactions", transactionId);
   await deleteDoc(transactionRef);
 };
 
 // Category utilities
 export const addCategory = async (userId: string, category: Omit<CategoryType, "id" | "userId" | "createdAt">) => {
+  if (!db) {
+    throw new Error('Firebase not initialized. Please configure Firebase environment variables.');
+  }
+
   const categoryData = {
     ...category,
     userId,
@@ -179,6 +203,10 @@ export const addCategory = async (userId: string, category: Omit<CategoryType, "
 };
 
 export const getCategories = async (userId: string): Promise<CategoryType[]> => {
+  if (!db) {
+    throw new Error('Firebase not initialized. Please configure Firebase environment variables.');
+  }
+
   const q = query(
     collection(db, "users", userId, "categories"),
     orderBy("name", "asc")
@@ -193,11 +221,19 @@ export const getCategories = async (userId: string): Promise<CategoryType[]> => 
 };
 
 export const updateCategory = async (userId: string, categoryId: string, updates: Partial<CategoryType>) => {
+  if (!db) {
+    throw new Error('Firebase not initialized. Please configure Firebase environment variables.');
+  }
+
   const categoryRef = doc(db, "users", userId, "categories", categoryId);
   await updateDoc(categoryRef, updates);
 };
 
 export const deleteCategory = async (userId: string, categoryId: string) => {
+  if (!db) {
+    throw new Error('Firebase not initialized. Please configure Firebase environment variables.');
+  }
+
   const categoryRef = doc(db, "users", userId, "categories", categoryId);
   await deleteDoc(categoryRef);
 };
@@ -228,6 +264,10 @@ export const createDefaultCategories = async (userId: string) => {
 
 // Source utilities
 export const addSource = async (userId: string, source: Omit<SourceType, "id" | "userId" | "createdAt">) => {
+  if (!db) {
+    throw new Error('Firebase not initialized. Please configure Firebase environment variables.');
+  }
+
   const sourceData = {
     ...source,
     userId,
@@ -239,6 +279,10 @@ export const addSource = async (userId: string, source: Omit<SourceType, "id" | 
 };
 
 export const getSources = async (userId: string): Promise<SourceType[]> => {
+  if (!db) {
+    throw new Error('Firebase not initialized. Please configure Firebase environment variables.');
+  }
+
   const q = query(
     collection(db, "users", userId, "sources"),
     orderBy("name", "asc")
@@ -253,11 +297,19 @@ export const getSources = async (userId: string): Promise<SourceType[]> => {
 };
 
 export const updateSource = async (userId: string, sourceId: string, updates: Partial<SourceType>) => {
+  if (!db) {
+    throw new Error('Firebase not initialized. Please configure Firebase environment variables.');
+  }
+
   const sourceRef = doc(db, "users", userId, "sources", sourceId);
   await updateDoc(sourceRef, updates);
 };
 
 export const deleteSource = async (userId: string, sourceId: string) => {
+  if (!db) {
+    throw new Error('Firebase not initialized. Please configure Firebase environment variables.');
+  }
+
   const sourceRef = doc(db, "users", userId, "sources", sourceId);
   await deleteDoc(sourceRef);
 };
