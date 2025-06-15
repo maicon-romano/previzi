@@ -431,6 +431,31 @@ export default function TransactionsMonthly() {
       <Card>
         <CardHeader>
           <CardTitle>Transações de {getMonthName(selectedMonth)}</CardTitle>
+          {/* Resumo de quantidade de transações */}
+          {filteredTransactions.length > 0 && (
+            <div className="bg-blue-50 p-4 rounded-lg mt-4 border border-blue-200">
+              <div className="flex flex-wrap gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">📌</span>
+                  <span className="font-semibold text-gray-700">
+                    Total de Transações: <span className="text-blue-600">{filteredTransactions.length}</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">✅</span>
+                  <span className="font-medium text-green-700">
+                    Receitas: <span className="font-bold">{filteredTransactions.filter(t => t.type === 'income').length}</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">❌</span>
+                  <span className="font-medium text-red-700">
+                    Despesas: <span className="font-bold">{filteredTransactions.filter(t => t.type === 'expense').length}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {filteredTransactions.length === 0 ? (
@@ -442,6 +467,7 @@ export default function TransactionsMonthly() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">#</TableHead>
                     <TableHead>Descrição</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Categoria</TableHead>
@@ -460,6 +486,9 @@ export default function TransactionsMonthly() {
                       transition={{ delay: index * 0.05 }}
                       className="group hover:bg-gray-50"
                     >
+                      <TableCell className="text-center text-sm font-medium text-gray-500">
+                        {index + 1}
+                      </TableCell>
                       <TableCell>
                         <div>
                           <div className="font-medium">{transaction.description}</div>

@@ -228,6 +228,32 @@ export default function Transactions() {
         </CardHeader>
 
         <CardContent className="space-y-6">
+          {/* Resumo de quantidade de transações */}
+          {filteredTransactions.length > 0 && (
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div className="flex flex-wrap gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">📌</span>
+                  <span className="font-semibold text-gray-700">
+                    Total de Transações: <span className="text-blue-600">{filteredTransactions.length}</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">✅</span>
+                  <span className="font-medium text-green-700">
+                    Receitas: <span className="font-bold">{filteredTransactions.filter(t => t.type === 'income').length}</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">❌</span>
+                  <span className="font-medium text-red-700">
+                    Despesas: <span className="font-bold">{filteredTransactions.filter(t => t.type === 'expense').length}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Navegação de mês */}
           <div className="flex items-center justify-between bg-white/50 rounded-lg p-4 border">
             <Button
@@ -339,6 +365,7 @@ export default function Transactions() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold w-12">#</TableHead>
                     <TableHead className="font-semibold">Data</TableHead>
                     <TableHead className="font-semibold">Descrição</TableHead>
                     <TableHead className="font-semibold">Categoria</TableHead>
@@ -348,8 +375,11 @@ export default function Transactions() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredTransactions.map((transaction) => (
+                  {filteredTransactions.map((transaction, index) => (
                     <TableRow key={transaction.id} className="hover:bg-gray-50/50">
+                      <TableCell className="text-center text-sm font-medium text-gray-500">
+                        {index + 1}
+                      </TableCell>
                       <TableCell className="font-medium">
                         {new Date(transaction.date).toLocaleDateString('pt-BR')}
                       </TableCell>

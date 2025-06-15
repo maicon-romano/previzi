@@ -287,8 +287,9 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               {pieChartData.length > 0 ? (
-                <div className="space-y-4">
-                  <div className="chart-container">
+                <div className="space-y-6">
+                  {/* Larger chart container */}
+                  <div className="h-80 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -296,9 +297,10 @@ export default function Dashboard() {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          outerRadius={80}
+                          outerRadius={120}
                           fill="#8884d8"
                           dataKey="value"
+                          label={({ percentage }) => `${percentage}%`}
                         >
                           {pieChartData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -309,22 +311,38 @@ export default function Dashboard() {
                             `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
                             `${props.payload.percentage}%`
                           ]}
+                          contentStyle={{
+                            backgroundColor: 'white',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '8px',
+                            fontSize: '14px'
+                          }}
                         />
-                        <Legend />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {pieChartData.slice(0, 4).map((item, index) => (
-                      <div key={item.name} className="flex items-center gap-2 text-sm">
-                        <div 
-                          className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                        ></div>
-                        <span className="text-gray-600 truncate">{item.name}</span>
-                        <span className="font-semibold">{item.percentage}%</span>
-                      </div>
-                    ))}
+                  {/* Enhanced legend with values and percentages */}
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-700 text-sm">Detalhamento por Categoria</h4>
+                    <div className="grid grid-cols-1 gap-3">
+                      {pieChartData.map((item, index) => (
+                        <div key={item.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="w-4 h-4 rounded-full flex-shrink-0" 
+                              style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                            ></div>
+                            <span className="text-gray-700 font-medium text-sm">{item.name}</span>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold text-gray-800 text-sm">
+                              R$ {Number(item.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </div>
+                            <div className="text-xs text-gray-500">{item.percentage}%</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               ) : (

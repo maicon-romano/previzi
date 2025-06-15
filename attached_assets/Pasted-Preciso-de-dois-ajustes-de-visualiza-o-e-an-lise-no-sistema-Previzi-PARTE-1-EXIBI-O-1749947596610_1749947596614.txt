@@ -1,0 +1,74 @@
+Preciso de dois ajustes de visualização e análise no sistema Previzi:
+
+---
+
+🟢 PARTE 1: EXIBIÇÃO DE QUANTIDADE DE TRANSAÇÕES POR MÊS (NUMERADAS)
+
+Problema atual:  
+Na página de Transações, não consigo saber facilmente quantas transações tenho no mês, nem visualizar a quantidade de despesas, receitas, etc.
+
+✅ O que quero:  
+
+- No topo ou no rodapé da listagem de transações, exibir um **resumo de quantidade**.
+
+Exemplo de visual:
+
+```
+
+📌 Total de Transações: 22
+✅ Receitas: 8
+❌ Despesas: 14
+
+```
+
+✅ Se possível, colocar **numeração sequencial** ao lado de cada transação na tabela, por exemplo:
+
+```
+
+1. Salário - R\$ 3000
+2. Aluguel - R\$ 1200
+3. Energia - R\$ 150
+   ...
+
+```
+
+---
+
+🟢 PARTE 2: MELHORAR O VISUAL E TAMANHO DOS GRÁFICOS (DASHBOARD)
+
+Problema atual:  
+Os gráficos de:
+
+- **Distribuição por Categoria**
+- **Evolução de Receita/Saldo**
+
+Estão muito pequenos, com fontes minúsculas, legendas difíceis de ler e com baixa clareza para análise.
+
+✅ O que quero:  
+
+- Aumentar o tamanho visual de cada gráfico (pode ser largura ou altura mínima).
+
+- Melhorar a **legibilidade das legendas** (fonte maior, espaçamento melhor, cores bem contrastadas).
+
+- Nos gráficos de Pizza ou Doughnut (Distribuição por Categoria):  
+✅ Mostrar não só a porcentagem mas também o **valor absoluto (R$)** de cada categoria na legenda.
+
+- No gráfico de Evolução de Receita:  
+✅ Permitir uma visualização clara por mês, com os valores mensais visíveis em tooltip ao passar o mouse.
+
+✅ Caso possível: incluir uma opção de filtro (Exemplo: "3 meses", "6 meses", "12 meses", "18 meses").
+
+✅ Melhorar o espaçamento entre os gráficos e os outros componentes da página.
+
+---
+
+✅ Resumo Final:
+
+✅ Exibir quantidade de transações (geral + por tipo)  
+✅ Melhorar visibilidade e tamanho dos gráficos  
+✅ Melhorar legendas com valores + porcentagem  
+✅ Melhor experiência visual para análise financeira  
+
+Tecnologias: React, Tailwind CSS, Recharts (ou a lib que estiver sendo usada para gráficos), Firebase Firestore.
+
+O objetivo é: melhorar a clareza visual, a usabilidade e a análise de dados no sistema Previzi.
