@@ -1,16 +1,148 @@
+import { useState, useEffect, useMemo } from "react";
 import { useTransactions } from "../hooks/useTransactions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { motion } from "framer-motion";
+import { TransactionType } from "../types";
+
+const PERIOD_OPTIONS = [
+  { value: "3", label: "3 meses" },
+  { value: "6", label: "6 meses" },
+  { value: "12", label: "12 meses" },
+  { value: "24", label: "24 meses" },
+  { value: "36", label: "36 meses" },
+  { value: "60", label: "60 meses" },
+  { value: "120", label: "120 meses (10 anos)" },
+];
+
+interface ProjectionData {
+  month: string;
+  monthKey: string;
+  income: number;
+  expenses: number;
+  monthlyBalance: number;
+  accumulatedBalance: number;
+}
+
+interface VariableTransaction {
+  transaction: TransactionType;
+  missingValue: boolean;
+  baseValue: number;
+}
 
 export default function Predictability() {
   const { transactions, isLoading } = useTransactions();
+  const [selectedPeriod, setSelectedPeriod] = useState("6");
+  const [variableTransactions, setVariableTransactions] = useState<VariableTransaction[]>([]);
+
+  // Get current balance from all paid transactions
+  const currentBalance = useMemo(() => {
+    return transactions
+      .filter(t => t.status === 'paid')
+      .reduce((sum, t) => {
+        return sum + (t.type === 'income' ? (t.amount || 0) : -(t.amount || 0));
+      }, 0);
+  }, [transactions]);
+
+  // Identify variable recurring transactions that need values
+  useEffect(() => {
+    const variableRecurring = transactions.filter(t => 
+      t.recurring && t.isVariableAmount
+    );
+
+    const variableData = variableRecurring.map(transaction => ({
+      transaction,
+      missingValue: !transaction.amount || transaction.amount === 0,
+      baseValue: transaction.amount || 0
+    }));
+
+    setVariableTransactions(variableData);
+  }, [transactions]);
+
+  // Check if we can calculate projections
+  const canCalculateProjections = useMemo(() => {
+    return variableTransactions.every(vt => !vt.missingValue);
+  }, [variableTransactions]);
+
+  // Generate projection data
+  const projectionData = useMemo(() => {
+    if (!canCalculateProjections) return [];
+
+    const months = parseInt(selectedPeriod);
+    const projections: ProjectionData[] = [];
+    const currentDate = new Date();
+    let accumulatedBalance = currentBalance;
+
+    for (let i = 0; i < months; i++) {
+      const projectionDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + i + 1, 1);
+      const monthKey = `${projectionDate.getFullYear()}-${projectionDate.getMonth()}`;
+      const monthLabel = projectionDate.toLocaleDateString('pt-BR', { 
+        month: 'short', 
+        year: i < 12 ? undefined : '2-digit' 
+      });
+
+      let monthlyIncome = 0;
+      let monthlyExpenses = 0;
+
+      // Calculate projections based on recurring transactions
+      transactions.forEach(transaction => {
+        if (!transaction.recurring) return;
+
+        // Check if this recurring transaction applies to this month
+        const transactionDate = new Date(transaction.date);
+        const isInRange = projectionDate >= transactionDate;
+
+        if (!isInRange) return;
+
+        // For fixed recurring transactions, check if it's still active
+        if (transaction.recurringType === 'fixed' && transaction.recurringEndDate) {
+          const endDate = new Date(transaction.recurringEndDate);
+          if (projectionDate > endDate) return;
+        }
+
+        const amount = transaction.amount || 0;
+        if (transaction.type === 'income') {
+          monthlyIncome += amount;
+        } else {
+          monthlyExpenses += amount;
+        }
+      });
+
+      const monthlyBalance = monthlyIncome - monthlyExpenses;
+      accumulatedBalance += monthlyBalance;
+
+      projections.push({
+        month: monthLabel,
+        monthKey,
+        income: monthlyIncome,
+        expenses: monthlyExpenses,
+        monthlyBalance,
+        accumulatedBalance
+      });
+    }
+
+    return projections;
+  }, [transactions, selectedPeriod, currentBalance, canCalculateProjections]);
+
+  // Calculate summary statistics
+  const summaryStats = useMemo(() => {
+    if (projectionData.length === 0) return null;
+
+    const totalIncome = projectionData.reduce((sum, p) => sum + p.income, 0);
+    const totalExpenses = projectionData.reduce((sum, p) => sum + p.expenses, 0);
+    const finalBalance = projectionData[projectionData.length - 1]?.accumulatedBalance || 0;
+    const avgMonthlyBalance = projectionData.reduce((sum, p) => sum + p.monthlyBalance, 0) / projectionData.length;
+
+    return {
+      totalIncome,
+      totalExpenses,
+      finalBalance,
+      avgMonthlyBalance,
+      projectedMonths: projectionData.length
+    };
+  }, [projectionData]);
 
   if (isLoading) {
     return (
@@ -25,231 +157,301 @@ export default function Predictability() {
     );
   }
 
-  // Calculate monthly averages from existing transactions
-  const monthlyData = new Map();
-  
-  transactions.forEach(transaction => {
-    const date = new Date(transaction.date);
-    const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-    
-    if (!monthlyData.has(monthKey)) {
-      monthlyData.set(monthKey, { income: 0, expenses: 0 });
-    }
-    
-    const monthData = monthlyData.get(monthKey);
-    if (transaction.type === 'income') {
-      monthData.income += transaction.amount;
-    } else {
-      monthData.expenses += transaction.amount;
-    }
-  });
-
-  // Calculate averages
-  const avgIncome = Array.from(monthlyData.values()).reduce((sum, data) => sum + data.income, 0) / Math.max(monthlyData.size, 1);
-  const avgExpenses = Array.from(monthlyData.values()).reduce((sum, data) => sum + data.expenses, 0) / Math.max(monthlyData.size, 1);
-
-  // Generate future projections (next 6 months)
-  const projections = [];
-  const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-  const currentDate = new Date();
-  
-  for (let i = 1; i <= 6; i++) {
-    const futureDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + i, 1);
-    const monthName = `${monthNames[futureDate.getMonth()]} ${futureDate.getFullYear()}`;
-    
-    // Add some variation to make projections more realistic
-    const incomeVariation = 1 + (Math.random() - 0.5) * 0.1; // ±5% variation
-    const expenseVariation = 1 + (Math.random() - 0.5) * 0.15; // ±7.5% variation
-    
-    const projectedIncome = avgIncome * incomeVariation;
-    const projectedExpenses = avgExpenses * expenseVariation;
-    const projectedBalance = projectedIncome - projectedExpenses;
-    
-    projections.push({
-      month: monthName,
-      income: projectedIncome,
-      expenses: projectedExpenses,
-      balance: projectedBalance,
-      isNegative: projectedBalance < 0,
-    });
-  }
-
-  // Chart data for balance projection
-  const chartData = projections.map((projection, index) => ({
-    month: projection.month.split(' ')[0].substring(0, 3),
-    balance: projection.balance,
-  }));
-
   return (
     <div className="space-y-6">
-      {/* Monthly Projections */}
-      <Card>
-        <CardHeader className="border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <CardTitle>Projeções Mensais</CardTitle>
-            <Select defaultValue="6months">
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="6months">Próximos 6 meses</SelectItem>
-                <SelectItem value="12months">Próximos 12 meses</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-        <CardContent className="p-6">
-          {projections.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projections.map((projection, index) => (
-                <div
-                  key={index}
-                  className={`border rounded-lg p-4 ${
-                    projection.isNegative 
-                      ? 'bg-red-50 border-danger-200' 
-                      : 'border-gray-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium text-gray-900">{projection.month}</h4>
-                    <span className={`text-xs px-2 py-1 rounded ${
-                      projection.isNegative 
-                        ? 'bg-red-100 text-red-600' 
-                        : 'text-gray-500'
-                    }`}>
-                      {projection.isNegative ? 'Atenção' : 'Previsto'}
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Receitas</span>
-                      <span className="font-medium text-success-500">
-                        +R$ {projection.income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Despesas</span>
-                      <span className="font-medium text-danger-500">
-                        -R$ {projection.expenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                    <hr className="my-2" />
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-gray-900">Saldo</span>
-                      <span className={`font-bold ${
-                        projection.balance >= 0 ? 'text-success-500' : 'text-danger-500'
-                      }`}>
-                        {projection.balance >= 0 ? '+' : ''}R$ {projection.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <i className="fas fa-crystal-ball text-4xl mb-4"></i>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Dados insuficientes</h3>
-              <p>Adicione mais transações para gerar projeções precisas</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Balance Projection Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Evolução do Saldo Previsto</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {chartData.length > 0 ? (
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis 
-                    tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
-                  />
-                  <Tooltip 
-                    formatter={(value) => [
-                      `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-                      'Saldo Previsto'
-                    ]}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="balance" 
-                    stroke="#2563EB" 
-                    strokeWidth={2}
-                    dot={{ fill: '#2563EB', strokeWidth: 2, r: 4 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="h-80 flex items-center justify-center text-gray-500">
-              <div className="text-center">
-                <i className="fas fa-chart-line text-4xl mb-2"></i>
-                <p>Gráfico de projeção não disponível</p>
-                <p className="text-sm">Adicione transações para visualizar projeções</p>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Financial Insights */}
-      {projections.length > 0 && (
+      {/* Period Selection */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <Card>
           <CardHeader>
-            <CardTitle>Insights Financeiros</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <i className="fas fa-calendar-alt text-blue-600"></i>
+              Período de Projeção
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">Tendências Identificadas</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center text-sm">
-                    <i className="fas fa-info-circle text-blue-500 mr-2"></i>
-                    <span>Receita média mensal: R$ {avgIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                  </div>
-                  <div className="flex items-center text-sm">
-                    <i className="fas fa-info-circle text-blue-500 mr-2"></i>
-                    <span>Despesa média mensal: R$ {avgExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                  </div>
-                  <div className="flex items-center text-sm">
-                    <i className={`fas fa-info-circle mr-2 ${
-                      (avgIncome - avgExpenses) >= 0 ? 'text-green-500' : 'text-red-500'
-                    }`}></i>
-                    <span>Saldo médio mensal: R$ {(avgIncome - avgExpenses).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">Recomendações</h4>
-                <div className="space-y-2">
-                  {projections.some(p => p.isNegative) ? (
-                    <div className="flex items-start text-sm">
-                      <i className="fas fa-exclamation-triangle text-red-500 mr-2 mt-0.5"></i>
-                      <span>Atenção: Saldo negativo previsto em alguns meses. Considere reduzir despesas ou aumentar receitas.</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-start text-sm">
-                      <i className="fas fa-check-circle text-green-500 mr-2 mt-0.5"></i>
-                      <span>Parabéns! Suas projeções indicam saldos positivos nos próximos meses.</span>
-                    </div>
-                  )}
-                  <div className="flex items-start text-sm">
-                    <i className="fas fa-lightbulb text-yellow-500 mr-2 mt-0.5"></i>
-                    <span>Dica: Mantenha uma reserva de emergência equivalente a 3-6 meses de despesas.</span>
-                  </div>
-                </div>
-              </div>
+            <div className="flex flex-wrap gap-2">
+              {PERIOD_OPTIONS.map((option) => (
+                <Button
+                  key={option.value}
+                  variant={selectedPeriod === option.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedPeriod(option.value)}
+                  className="transition-all duration-200"
+                >
+                  {option.label}
+                </Button>
+              ))}
             </div>
           </CardContent>
         </Card>
+      </motion.div>
+
+      {/* Variable Transactions Warning */}
+      {variableTransactions.some(vt => vt.missingValue) && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <Alert className="border-orange-200 bg-orange-50">
+            <i className="fas fa-exclamation-triangle text-orange-600"></i>
+            <AlertDescription className="ml-2">
+              <strong>Atenção:</strong> Algumas transações recorrentes variáveis precisam de valores definidos para calcular as projeções.
+              <div className="mt-2 space-y-1">
+                {variableTransactions
+                  .filter(vt => vt.missingValue)
+                  .map(vt => (
+                    <div key={vt.transaction.id} className="text-sm text-orange-700">
+                      • {vt.transaction.description} - Defina um valor base
+                    </div>
+                  ))
+                }
+              </div>
+            </AlertDescription>
+          </Alert>
+        </motion.div>
+      )}
+
+      {/* Current Balance */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-2">Saldo Atual</p>
+              <p className={`text-3xl font-bold ${currentBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                R$ {currentBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {canCalculateProjections && summaryStats && (
+        <>
+          {/* Summary Cards */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+          >
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                    <i className="fas fa-arrow-up text-green-600"></i>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600">Receita Total Projetada</p>
+                    <p className="text-lg font-bold text-green-600">
+                      R$ {summaryStats.totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                    <i className="fas fa-arrow-down text-red-600"></i>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600">Despesa Total Projetada</p>
+                    <p className="text-lg font-bold text-red-600">
+                      R$ {summaryStats.totalExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <i className="fas fa-chart-line text-blue-600"></i>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600">Saldo Final Projetado</p>
+                    <p className={`text-lg font-bold ${summaryStats.finalBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      R$ {summaryStats.finalBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                    <i className="fas fa-calculator text-purple-600"></i>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600">Média Mensal</p>
+                    <p className={`text-lg font-bold ${summaryStats.avgMonthlyBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      R$ {summaryStats.avgMonthlyBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Enhanced Chart */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <i className="fas fa-chart-area text-blue-600"></i>
+                  Evolução do Saldo Acumulado ({selectedPeriod} meses)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-96 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={projectionData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                      <XAxis 
+                        dataKey="month" 
+                        tick={{ fontSize: 12 }}
+                        angle={projectionData.length > 12 ? -45 : 0}
+                        textAnchor={projectionData.length > 12 ? "end" : "middle"}
+                        height={projectionData.length > 12 ? 60 : 30}
+                      />
+                      <YAxis 
+                        tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <Tooltip 
+                        content={({ active, payload, label }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload as ProjectionData;
+                            return (
+                              <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg">
+                                <p className="font-semibold text-gray-900 mb-2">{label}</p>
+                                <div className="space-y-1">
+                                  <p className="text-sm text-green-600">
+                                    Receitas: R$ {data.income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                  </p>
+                                  <p className="text-sm text-red-600">
+                                    Despesas: R$ {data.expenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                  </p>
+                                  <p className="text-sm text-gray-700">
+                                    Saldo do Mês: R$ {data.monthlyBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                  </p>
+                                  <p className="text-sm font-semibold text-blue-600">
+                                    Saldo Acumulado: R$ {data.accumulatedBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="accumulatedBalance" 
+                        stroke="#3B82F6" 
+                        strokeWidth={3}
+                        dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                        name="Saldo Acumulado"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Detailed Projection Table */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <i className="fas fa-table text-green-600"></i>
+                  Tabela de Projeção Detalhada
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-2 font-semibold text-gray-700">Mês</th>
+                        <th className="text-right py-3 px-2 font-semibold text-green-600">Receita Total</th>
+                        <th className="text-right py-3 px-2 font-semibold text-red-600">Despesa Total</th>
+                        <th className="text-right py-3 px-2 font-semibold text-gray-700">Saldo do Mês</th>
+                        <th className="text-right py-3 px-2 font-semibold text-blue-600">Saldo Acumulado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {projectionData.map((row, index) => (
+                        <tr key={row.monthKey} className={`border-b border-gray-100 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+                          <td className="py-3 px-2 font-medium">{row.month}</td>
+                          <td className="py-3 px-2 text-right text-green-600">
+                            R$ {row.income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td className="py-3 px-2 text-right text-red-600">
+                            R$ {row.expenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td className={`py-3 px-2 text-right font-medium ${row.monthlyBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            R$ {row.monthlyBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td className={`py-3 px-2 text-right font-bold ${row.accumulatedBalance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                            R$ {row.accumulatedBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </>
+      )}
+
+      {!canCalculateProjections && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <Card>
+            <CardContent className="p-12 text-center">
+              <i className="fas fa-exclamation-triangle text-6xl text-orange-400 mb-4"></i>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Defina Valores para Calcular Projeções
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Para gerar previsões precisas, todas as transações recorrentes variáveis precisam ter valores definidos.
+              </p>
+              <p className="text-sm text-gray-500">
+                Vá para a página de Transações e defina os valores das transações recorrentes variáveis.
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
     </div>
   );

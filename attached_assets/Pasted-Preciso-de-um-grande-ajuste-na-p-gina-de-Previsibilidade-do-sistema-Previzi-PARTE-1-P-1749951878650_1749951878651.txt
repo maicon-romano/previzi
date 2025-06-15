@@ -1,0 +1,100 @@
+Preciso de um grande ajuste na página de Previsibilidade do sistema Previzi.
+
+---
+
+🟢 PARTE 1: PERÍODO DE PROJEÇÃO FLEXÍVEL (Filtro Dinâmico)
+
+Problema atual:  
+O sistema só projeta os próximos 6 meses.
+
+✅ O que quero:
+
+- Criar um seletor/filtro de período, com opções como:
+
+```
+
+\[3 meses] \[6 meses] \[12 meses] \[24 meses] \[36 meses] \[60 meses] \[120 meses (10 anos)]
+
+```
+
+✅ Por padrão, carregar os próximos 6 meses, mas permitir o usuário escolher um horizonte de até **10 anos (120 meses)**.
+
+✅ Sempre que o filtro mudar, atualizar a tabela e o gráfico para incluir o novo range.
+
+---
+
+🟢 PARTE 2: CONSIDERAR RECEITAS/DESPESAS RECORRENTES VARIÁVEIS → VALOR OBRIGATÓRIO PARA PREVISIBILIDADE
+
+Problema atual:  
+As transações recorrentes variáveis podem estar **sem valor (null)**, o que prejudica a projeção.
+
+✅ O que quero:
+
+- Se uma transação é `recurring: true` e `isVariableAmount: true`, e ainda não tem um valor definido:
+
+✅ Assumir por padrão o valor definido na criação da transação (o valor de origem).
+
+✅ Se o valor de origem não existir:  
+👉 Bloquear o cálculo de previsibilidade até o usuário informar um valor inicial.
+
+✅ Além disso:  
+Para cada mês projetado, o sistema deve permitir o ajuste individual (como já acontece nas variáveis mensais), mas sempre começar com o valor-base da origem.
+
+---
+
+🟢 PARTE 3: GRÁFICO MAIS VISUAL E ESCALÁVEL
+
+Problema atual:  
+O gráfico de previsibilidade está pequeno, difícil de ler e não acompanha os filtros de período.
+
+✅ O que quero:
+
+- Aumentar o tamanho do gráfico para que seja legível mesmo com projeções longas (ex: 24 ou 120 meses).
+
+- Adicionar **scroll horizontal ou responsividade** se a quantidade de meses for muito grande.
+
+- Mostrar no gráfico de linha o saldo acumulado ao longo do período.
+
+✅ Exemplo de lógica de saldo acumulado:
+
+Se o saldo de Julho/2025 for +100, e Agosto/2025 for +200, então:
+
+| Mês         | Saldo Mensal | Saldo Acumulado |
+|-------------|--------------|-----------------|
+| Julho/2025  | +100         | 100             |
+| Agosto/2025 | +200         | 300             |
+| Setembro/25 | -150         | 150             |
+
+✅ Tooltip ao passar o mouse:  
+Mostrar Receitas, Despesas e Saldo acumulado de cada mês.
+
+✅ Eixo Y deve ter espaçamento adequado para valores altos ou negativos.
+
+---
+
+🟢 PARTE 4: TABELA DE PROJEÇÃO DETALHADA (ABAIXO DO GRÁFICO)
+
+✅ Exibir uma tabela listando por mês:
+
+| Mês        | Receita Total | Despesa Total | Saldo do Mês | Saldo Acumulado |
+|------------|---------------|---------------|--------------|-----------------|
+| Jul/2025   | R$ 3000       | R$ 1500       | R$ +1500     | R$ +1500        |
+| Ago/2025   | R$ 3000       | R$ 1500       | R$ +1500     | R$ +3000        |
+
+✅ Atualizar a tabela automaticamente ao mudar o filtro de período.
+
+---
+
+✅ Resumo Final:
+
+✅ Filtrar por períodos de até 10 anos  
+✅ Exigir valor para todas as recorrentes variáveis para previsibilidade  
+✅ Replicar o valor original para os próximos meses das variáveis  
+✅ Permitir ajuste mês a mês nas variáveis  
+✅ Gráfico maior, acumulativo, com scroll se necessário  
+✅ Tabela analítica detalhada com saldo acumulado por mês  
+
+Tecnologias: React, Tailwind CSS, Recharts ou equivalente, Firebase Firestore.
+
+O objetivo é: Transformar a página de Previsibilidade em uma ferramenta analítica visual, estratégica e escalável.
+
