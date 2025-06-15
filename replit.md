@@ -107,6 +107,13 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 ### June 15, 2025
+- **Fixed Google Authentication Cross-Origin Policy Issues**: Migrated from signInWithPopup to signInWithRedirect
+  - Replaced `signInWithPopup()` with `signInWithRedirect()` for better mobile compatibility
+  - Added proper redirect result handling in AuthContext
+  - Created firebase.json with Cross-Origin-Opener-Policy headers for Firebase Hosting
+  - Eliminates "Cross-Origin-Opener-Policy policy would block the window.closed call" errors
+  - Improved authentication reliability across desktop and mobile devices
+
 - **Comprehensive Scenario Simulation System**: Transformed Predictability page into advanced financial decision-making tool
   - **"What if?" Simulator**: New ScenarioSimulator component with modal interface for creating income/expense scenarios
   - **Real-time Projection Updates**: All KPIs, charts, and tables react instantly to scenario toggles
