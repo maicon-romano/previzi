@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { 
   User, 
   signInWithEmailAndPassword,
@@ -8,8 +7,7 @@ import {
   onAuthStateChanged,
   sendPasswordResetEmail,
   updateProfile,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   GoogleAuthProvider
 } from "firebase/auth";
 import { auth } from "../firebase";
@@ -37,7 +35,6 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   async function register(email: string, password: string, name: string) {
     const { user } = await createUserWithEmailAndPassword(auth, email, password);
@@ -50,15 +47,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function loginWithGoogle() {
     const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({
-      prompt: 'select_account'
-    });
-    await signInWithRedirect(auth, provider);
+    await signInWithPopup(auth, provider);
   }
 
   async function logout() {
     await signOut(auth);
-    navigate('/auth');
   }
 
   async function resetPassword(email: string) {
@@ -66,45 +59,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    let isMounted = true;
-
-    // Handle redirect result when user returns from Google auth
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result && isMounted) {
-          console.log('Google sign-in successful via redirect:', result.user.email);
-          // Navigation will be handled by onAuthStateChanged
-        }
-      } catch (error) {
-        console.error('Error handling redirect result:', error);
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    // Handle authentication state changes
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (isMounted) {
-        setCurrentUser(user);
-        setLoading(false);
-        
-        // Navigate to dashboard on successful login
-        if (user && window.location.pathname === '/auth') {
-          navigate('/dashboard');
-        }
-      }
+      setCurrentUser(user);
+      setLoading(false);
     });
 
-    // Check for redirect result first, then set up auth listener
-    handleRedirectResult();
-
-    return () => {
-      isMounted = false;
-      unsubscribe();
-    };
-  }, [navigate]);
+    return unsubscribe;
+  }, []);
 
   const value = {
     currentUser,
@@ -118,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }

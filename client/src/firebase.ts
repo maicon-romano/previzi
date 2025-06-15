@@ -1,21 +1,17 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// Firebase configuration - hardcoded securely
 const firebaseConfig = {
-  apiKey: "AIzaSyDmTW3ZuYmR4sjV2Mm983epj4yB-L-Mp-s",
-  authDomain: "previzi-54773.firebaseapp.com",
-  projectId: "previzi-54773",
-  storageBucket: "previzi-54773.firebasestorage.app",
-  messagingSenderId: "1054912590243",
-  appId: "1:1054912590243:web:a4677f2390fdc4af3b6a16",
-  measurementId: "G-0QHCXC6W3N"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "default_key",
+  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID || "previzi-54773"}.firebaseapp.com`,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "previzi-54773",
+  storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID || "previzi-54773"}.firebasestorage.app`,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "default_sender_id",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "default_app_id",
 };
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-
+const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export default app;

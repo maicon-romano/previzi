@@ -252,7 +252,7 @@ export default function Calendar() {
                            tDate.getMonth() === currentMonth && 
                            tDate.getFullYear() === currentYear;
                   })
-                  .reduce((sum, t) => sum + (t.amount || 0), 0)
+                  .reduce((sum, t) => sum + t.amount, 0)
                   .toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </div>
               <div className="text-sm text-success-700 mt-1">Total de Receitas</div>
@@ -267,7 +267,7 @@ export default function Calendar() {
                            tDate.getMonth() === currentMonth && 
                            tDate.getFullYear() === currentYear;
                   })
-                  .reduce((sum, t) => sum + (t.amount || 0), 0)
+                  .reduce((sum, t) => sum + t.amount, 0)
                   .toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </div>
               <div className="text-sm text-danger-700 mt-1">Total de Despesas</div>

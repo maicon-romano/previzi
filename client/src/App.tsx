@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Switch, Route } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "sonner";
@@ -15,77 +15,80 @@ import Categories from "./pages/Categories";
 import Settings from "./pages/Settings";
 import NotFound from "@/pages/not-found";
 
+function Router() {
+  return (
+    <Switch>
+      <Route path="/auth" component={AuthPage} />
+      <Route path="/dashboard">
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/transactions">
+        <ProtectedRoute>
+          <TransactionsMonthly />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/predictability">
+        <ProtectedRoute>
+          <Predictability />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/calendar">
+        <ProtectedRoute>
+          <Calendar />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/categories">
+        <ProtectedRoute>
+          <Categories />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/settings">
+        <ProtectedRoute>
+          <Settings />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/">
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <TooltipProvider>
-            <Routes>
-              <Route path="/auth" element={<AuthPage />} />
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/transactions" 
-                element={
-                  <ProtectedRoute>
-                    <TransactionsMonthly />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/transactions/all" 
-                element={
-                  <ProtectedRoute>
-                    <Transactions />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/predictability" 
-                element={
-                  <ProtectedRoute>
-                    <Predictability />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/calendar" 
-                element={
-                  <ProtectedRoute>
-                    <Calendar />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/categories" 
-                element={
-                  <ProtectedRoute>
-                    <Categories />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/settings" 
-                element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Toaster />
-          </TooltipProvider>
-        </AuthProvider>
-      </BrowserRouter>
+      <AuthProvider>
+        <TooltipProvider>
+          <Router />
+          <Toaster 
+            position="bottom-right"
+            expand={false}
+            richColors={false}
+            closeButton
+            duration={4000}
+            visibleToasts={3}
+            toastOptions={{
+              style: {
+                background: '#ffffff',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                color: '#1f2937',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                fontSize: '14px',
+                fontWeight: '500',
+              },
+              className: 'rounded-lg',
+            }}
+            theme="light"
+          />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
