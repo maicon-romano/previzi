@@ -267,6 +267,7 @@ export default function TransactionsMonthly() {
 
   const categories = Array.from(new Set(transactions.map(t => t.category)));
   
+  // Comprehensive KPI calculations for the month
   const totalIncome = filteredTransactions
     .filter(t => t.type === 'income' && t.amount !== null)
     .reduce((sum, t) => sum + (t.amount || 0), 0);
@@ -275,7 +276,16 @@ export default function TransactionsMonthly() {
     .filter(t => t.type === 'expense' && t.amount !== null)
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
-  const balance = totalIncome - totalExpenses;
+  const paidExpenses = filteredTransactions
+    .filter(t => t.type === 'expense' && t.status === 'paid' && t.amount !== null)
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+  const pendingExpenses = filteredTransactions
+    .filter(t => t.type === 'expense' && t.status === 'pending' && t.amount !== null)
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+  const totalBalance = totalIncome - totalExpenses;
+  const realBalance = totalIncome - paidExpenses; // Only considering paid expenses
 
   if (!currentUser) {
     return <div>Faça login para visualizar suas transações.</div>;
@@ -338,13 +348,22 @@ export default function TransactionsMonthly() {
         </CardHeader>
       </Card>
 
-      {/* Resumo financeiro */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+      {/* Comprehensive Financial KPIs */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+      >
+        {/* Total de Receitas */}
+        <Card className="border-green-200 bg-green-50/50">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                <span className="text-2xl">💰</span>
+              </div>
               <div>
-                <p className="text-sm text-gray-600">Receitas</p>
+                <p className="text-sm text-green-700 font-medium">Total de Receitas</p>
                 <p className="text-xl font-bold text-green-600">
                   R$ {totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
@@ -353,11 +372,15 @@ export default function TransactionsMonthly() {
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Total de Despesas */}
+        <Card className="border-red-200 bg-red-50/50">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                <span className="text-2xl">💸</span>
+              </div>
               <div>
-                <p className="text-sm text-gray-600">Despesas</p>
+                <p className="text-sm text-red-700 font-medium">Total de Despesas</p>
                 <p className="text-xl font-bold text-red-600">
                   R$ {totalExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
@@ -366,19 +389,76 @@ export default function TransactionsMonthly() {
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Despesas Pagas */}
+        <Card className="border-blue-200 bg-blue-50/50">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                <span className="text-2xl">✅</span>
+              </div>
               <div>
-                <p className="text-sm text-gray-600">Saldo</p>
-                <p className={`text-xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  R$ {balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                <p className="text-sm text-blue-700 font-medium">Despesas Pagas</p>
+                <p className="text-xl font-bold text-blue-600">
+                  R$ {paidExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
-      </div>
+
+        {/* Despesas em Aberto */}
+        <Card className="border-orange-200 bg-orange-50/50">
+          <CardContent className="p-4">
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              <div>
+                <p className="text-sm text-orange-700 font-medium">Despesas em Aberto</p>
+                <p className="text-xl font-bold text-orange-600">
+                  R$ {pendingExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Saldo Total */}
+        <Card className={`border-purple-200 bg-purple-50/50`}>
+          <CardContent className="p-4">
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                <span className="text-2xl">📊</span>
+              </div>
+              <div>
+                <p className="text-sm text-purple-700 font-medium">Saldo Total</p>
+                <p className={`text-xl font-bold ${totalBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  R$ {totalBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+                <p className="text-xs text-gray-600">Receitas - Todas as Despesas</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Saldo Real (apenas pagas) */}
+        <Card className={`border-emerald-200 bg-emerald-50/50`}>
+          <CardContent className="p-4">
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mr-3">
+                <span className="text-2xl">💎</span>
+              </div>
+              <div>
+                <p className="text-sm text-emerald-700 font-medium">Saldo Real</p>
+                <p className={`text-xl font-bold ${realBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  R$ {realBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+                <p className="text-xs text-gray-600">Receitas - Despesas Pagas</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Filtros */}
       <Card>

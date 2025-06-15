@@ -1,0 +1,55 @@
+## ✅ Prompt de Ajustes – **Previzi – Tela de Transações + Saldo por Status de Pagamento**
+
+### ✅ Novo ajuste na tela de **Transações Mensais (TransactionsMonthly.tsx)**:
+
+**Adicionar um bloco resumo no topo (ou logo acima da tabela), com os seguintes indicadores numéricos:**
+
+---
+
+### 🔢 **Novos KPIs / Indicadores por mês:**
+
+| Indicador                                         | O que mostrar                                                      |
+| ------------------------------------------------- | ------------------------------------------------------------------ |
+| Total de Receitas                                 | Somatório de todas as transações do tipo **`income`**              |
+| Total de Despesas                                 | Somatório de todas as transações do tipo **`expense`**             |
+| **Despesas Pagas**                                | Somatório de despesas com **`status: paid`**                       |
+| **Despesas em Aberto**                            | Somatório de despesas com **`status: pending`**                    |
+| **Saldo Total (Receitas - Despesas)**             | Todas as receitas menos todas as despesas (independente de status) |
+| **Saldo Real (Receitas - Despesas pagas apenas)** | Receitas menos apenas as despesas com **status: paid**             |
+
+---
+
+### ✅ Exemplo de cálculo (se houver dúvidas):
+
+Se o usuário tiver no mês:
+
+* Receitas = R\$1000
+* Despesas pagas = R\$100
+* Despesas em aberto = R\$300
+
+Deve aparecer assim:
+
+* **Total de Receitas:** R\$1000
+* **Total de Despesas:** R\$400
+* **Despesas Pagas:** R\$100
+* **Despesas em Aberto:** R\$300
+* **Saldo Total:** R\$600 (1000 - 400)
+* **Saldo Real (apenas pagas):** R\$900 (1000 - 100)
+
+---
+
+### ✅ Design sugerido (UI):
+
+* Pode ser em **cards com cor de fundo levemente diferente**, ou com **ícones ao lado de cada número** (ex: ✅ para despesas pagas, ⚠️ para em aberto).
+* Também pode manter o visual consistente com os cards que já aparecem no dashboard.
+
+---
+
+### ✅ Tecnologias envolvidas:
+
+* React + TypeScript
+* Firebase Firestore
+
+### ✅ Observação Final:
+
+**Esses novos KPIs devem coexistir com as informações que já aparecem (quantidade de transações, filtros por categoria, status, etc).**
