@@ -120,10 +120,14 @@ Preferred communication style: Simple, everyday language.
   - **Simulation Badges**: Visual indicators when scenarios are active across all financial displays
   - **Enhanced KPI Cards**: Added payment status breakdown to TransactionsMonthly page with 6 comprehensive metrics
 
-- **Dashboard Month Filtering Enhancement**: Added month navigation with previous/next buttons
-  - Dashboard now filters all data (income, expenses, charts) based on selected month
-  - Defaults to current month with intuitive navigation controls
-  - Maintains consistency with other page navigation patterns
+- **Enhanced Month Navigation with Date Picker**: Added comprehensive calendar date picker to Dashboard and Transactions pages
+  - Click on month name to open date picker popup with year and month selectors
+  - Quick selection buttons for "Mês Atual" and "Mês Anterior" 
+  - Year selector covers 5 years before to 5 years after current year
+  - Month selector displays full Portuguese month names
+  - Maintains existing arrow button navigation for step-by-step browsing
+  - Consistent date picker interface across all major pages
+  - Eliminates need for multiple clicks to reach distant months/years
 
 ### June 14, 2025
 - **Critical Fixes for Infinite Recurring Transaction System**: Resolved date validation and deletion issues
