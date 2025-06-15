@@ -87,8 +87,9 @@ function App() {
             }}
             theme="light"
           />
-        </TooltipProvider>
-      </AuthProvider>
+          </TooltipProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 }
