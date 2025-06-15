@@ -66,7 +66,7 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <Router />
-          <Toaster 
+          <Toaster
             position="bottom-right"
             expand={false}
             richColors={false}
@@ -75,15 +75,16 @@ function App() {
             visibleToasts={3}
             toastOptions={{
               style: {
-                background: '#ffffff',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                color: '#1f2937',
-                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-                fontSize: '14px',
-                fontWeight: '500',
+                background: "#ffffff",
+                border: "1px solid #e5e7eb",
+                borderRadius: "8px",
+                color: "#1f2937",
+                boxShadow:
+                  "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                fontSize: "14px",
+                fontWeight: "500",
               },
-              className: 'rounded-lg',
+              className: "rounded-lg",
             }}
             theme="light"
           />

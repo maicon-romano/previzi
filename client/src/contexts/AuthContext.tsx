@@ -8,7 +8,6 @@ import {
   sendPasswordResetEmail,
   updateProfile,
   signInWithRedirect,
-  getRedirectResult,
   GoogleAuthProvider,
 } from "firebase/auth";
 import { useLocation } from "wouter";
@@ -16,6 +15,7 @@ import { auth } from "../firebase";
 
 interface AuthContextType {
   currentUser: User | null;
+  setCurrentUser: (user: User | null) => void;
   login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
@@ -67,31 +67,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result?.user) {
-          console.log("✅ Google redirect login successful");
-          setCurrentUser(result.user);
-          setLocation("/dashboard"); // Redireciona para dashboard após login com Google
-        }
-      } catch (error) {
-        console.error("❌ Error handling Google redirect result:", error);
-      }
-    };
-
-    handleRedirectResult();
-
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
       setLoading(false);
     });
 
     return unsubscribe;
-  }, [setLocation]);
+  }, []);
 
   const value = {
     currentUser,
+    setCurrentUser,
     login,
     loginWithGoogle,
     register,
