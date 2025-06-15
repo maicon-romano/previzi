@@ -107,12 +107,16 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 ### June 15, 2025
-- **Fixed Google Authentication Cross-Origin Policy Issues**: Migrated from signInWithPopup to signInWithRedirect
-  - Replaced `signInWithPopup()` with `signInWithRedirect()` for better mobile compatibility
-  - Added proper redirect result handling in AuthContext
-  - Created firebase.json with Cross-Origin-Opener-Policy headers for Firebase Hosting
-  - Eliminates "Cross-Origin-Opener-Policy policy would block the window.closed call" errors
-  - Improved authentication reliability across desktop and mobile devices
+- **Comprehensive Google Authentication System Overhaul**: Complete resolution of authentication issues
+  - **Cross-Origin-Opener-Policy Fix**: Migrated from `signInWithPopup()` to `signInWithRedirect()` 
+  - **Enhanced AuthContext**: Proper redirect result handling with `getRedirectResult()` and cleanup
+  - **Firebase App Initialization**: Prevents multiple app initialization with `getApps().length` check
+  - **Environment Variable Validation**: Comprehensive validation with clear error messages for missing Firebase config
+  - **Enhanced firebase.json**: Complete CORS configuration with security headers for production deployment
+  - **TypeScript Error Resolution**: Fixed Firebase utilities and Calendar component type safety issues
+  - **Production Ready**: Supports both Firebase Hosting (previzi-54773.web.app) and custom domain (financas.previzi.com.br)
+  - **Environment Setup**: Created .env.example with step-by-step Firebase configuration instructions
+  - Eliminates "Cross-Origin-Opener-Policy policy would block the window.closed call" errors permanently
 
 - **Comprehensive Scenario Simulation System**: Transformed Predictability page into advanced financial decision-making tool
   - **"What if?" Simulator**: New ScenarioSimulator component with modal interface for creating income/expense scenarios
