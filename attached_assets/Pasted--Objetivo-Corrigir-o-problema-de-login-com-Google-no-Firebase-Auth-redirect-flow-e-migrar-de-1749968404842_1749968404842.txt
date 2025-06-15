@@ -1,0 +1,73 @@
+✅ **Objetivo:** Corrigir o problema de login com Google no Firebase Auth (redirect flow) e migrar de `wouter` para `react-router-dom` para que o fluxo de redirecionamento do Firebase funcione corretamente após o login.
+
+✅ **Contexto atual:**
+
+* Meu projeto está no GitHub: [https://github.com/maicon-romano/previzi](https://github.com/maicon-romano/previzi)
+* Hoje o login com Google redireciona de volta mas não loga o usuário (continua na tela de login).
+* Estou usando `getRedirectResult()` e `onAuthStateChanged()` no `AuthContext`.
+* Também estou usando o Vite + Firebase Hosting.
+
+---
+
+### ✅ Ajustes que você deve fazer:
+
+---
+
+#### 🔐 1) Mover as credenciais Firebase para dentro do código de forma segura (sem depender de secrets do Replit)
+
+* Quero que as variáveis como API\_KEY, projectId, etc, fiquem definidas dentro de um arquivo TypeScript (`firebaseConfig.ts` ou dentro de `firebase.ts` mesmo).
+* Não quero mais depender de `.env` ou dos Secrets do Replit.
+* Exemplo:
+
+```ts
+const firebaseConfig = {
+  apiKey: "AIzaSyDmTW3ZuYmR4sjV2Mm983epj4yB-L-Mp-s",
+  authDomain: "previzi-54773.firebaseapp.com",
+  projectId: "previzi-54773",
+  storageBucket: "previzi-54773.firebasestorage.app",
+  messagingSenderId: "1054912590243",
+  appId: "1:1054912590243:web:a4677f2390fdc4af3b6a16",
+  measurementId: "G-0QHCXC6W3N"
+};
+```
+
+**✅ Quero que seja direto no código, mas se tiver algum ajuste para minimizar risco (ex.: deixar num arquivo isolado como `firebaseConfig.ts` e exportar), pode fazer.**
+
+---
+
+#### 🛠️ 2) Migrar todo o roteamento de `wouter` para `react-router-dom`
+
+* Ajustar meu `App.tsx` e todos os arquivos que usam `useLocation()` do `wouter` para agora usar o `useNavigate()` e o `<Routes>`, `<Route>` do `react-router-dom`.
+* Preciso que o React Router rode em modo **BrowserRouter** (não HashRouter).
+* Quero que o fluxo de navegação continue funcionando (incluindo rotas protegidas).
+* Também preciso que o AuthContext consiga fazer `navigate('/dashboard')` após login.
+
+---
+
+#### 🔑 3) Corrigir o fluxo do Google SignIn com Redirect (getRedirectResult)
+
+* Garanta que ao fazer login com Google, o sistema:
+
+✅ Redirecione para o Google corretamente
+✅ Volte para o app
+✅ Recupere o usuário autenticado com `getRedirectResult()` e `onAuthStateChanged()`
+✅ Redirecione o usuário para `/dashboard` se o login for bem-sucedido
+
+* Se precisar ajustar meu AuthContext para lidar melhor com o redirect + state, pode fazer.
+
+---
+
+#### ✅ Extras:
+
+* Depois de tudo, gere um build (`npm run build`) e garanta que o deploy (`firebase deploy`) vai funcionar.
+
+---
+
+### ✅ Resumo:
+
+**Migrar para React Router**,
+**Incorporar config Firebase direto no código**,
+**Garantir login com Google funcionando**,
+**Ajustar AuthContext**,
+**Ajustar fluxo de navegação**,
+**Garantir que o build e deploy funcionem.**

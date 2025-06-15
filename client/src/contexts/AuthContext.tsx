@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   User, 
   signInWithEmailAndPassword,
@@ -36,26 +37,18 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   async function register(email: string, password: string, name: string) {
-    if (!auth) {
-      throw new Error('Firebase not initialized. Please configure Firebase environment variables.');
-    }
     const { user } = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(user, { displayName: name });
   }
 
   async function login(email: string, password: string) {
-    if (!auth) {
-      throw new Error('Firebase not initialized. Please configure Firebase environment variables.');
-    }
     await signInWithEmailAndPassword(auth, email, password);
   }
 
   async function loginWithGoogle() {
-    if (!auth) {
-      throw new Error('Firebase not initialized. Please configure Firebase environment variables.');
-    }
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({
       prompt: 'select_account'
@@ -64,37 +57,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function logout() {
-    if (!auth) {
-      throw new Error('Firebase not initialized. Please configure Firebase environment variables.');
-    }
     await signOut(auth);
+    navigate('/auth');
   }
 
   async function resetPassword(email: string) {
-    if (!auth) {
-      throw new Error('Firebase not initialized. Please configure Firebase environment variables.');
-    }
     await sendPasswordResetEmail(auth, email);
   }
 
   useEffect(() => {
     let isMounted = true;
 
-    // If Firebase is not initialized, just mark as not loading
-    if (!auth) {
-      console.warn('Firebase auth not initialized. Running without authentication.');
-      setLoading(false);
-      return;
-    }
-
     // Handle redirect result when user returns from Google auth
     const handleRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
         if (result && isMounted) {
-          // User successfully signed in via redirect
           console.log('Google sign-in successful via redirect:', result.user.email);
-          // The onAuthStateChanged will handle setting the user
+          // Navigation will be handled by onAuthStateChanged
         }
       } catch (error) {
         console.error('Error handling redirect result:', error);
@@ -109,6 +89,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (isMounted) {
         setCurrentUser(user);
         setLoading(false);
+        
+        // Navigate to dashboard on successful login
+        if (user && window.location.pathname === '/auth') {
+          navigate('/dashboard');
+        }
       }
     });
 
@@ -119,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isMounted = false;
       unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   const value = {
     currentUser,
@@ -133,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
