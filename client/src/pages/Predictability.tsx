@@ -3,28 +3,33 @@ import { useTransactions } from "../hooks/useTransactions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine, Area, AreaChart } from "recharts";
 import { motion } from "framer-motion";
 import { TransactionType } from "../types";
+import ScenarioSimulator, { SimulatedItem } from "../components/ScenarioSimulator";
+import { 
+  buildProjection, 
+  calculateFinancialAnalysis, 
+  calculateHealthIndicators, 
+  generateRecommendations,
+  mapSimulatedItemsToTransactions,
+  type ProjectionData,
+  type FinancialAnalysis,
+  type HealthIndicators,
+  type Recommendation
+} from "../utils/projection";
 
 const PERIOD_OPTIONS = [
   { value: "3", label: "3 meses" },
   { value: "6", label: "6 meses" },
-  { value: "12", label: "12 meses" },
-  { value: "24", label: "24 meses" },
-  { value: "36", label: "36 meses" },
-  { value: "60", label: "60 meses" },
-  { value: "120", label: "120 meses (10 anos)" },
+  { value: "12", label: "1 ano" },
+  { value: "24", label: "2 anos" },
+  { value: "36", label: "3 anos" },
+  { value: "60", label: "5 anos" },
+  { value: "120", label: "10 anos" },
 ];
-
-interface ProjectionData {
-  month: string;
-  monthKey: string;
-  income: number;
-  expenses: number;
-  monthlyBalance: number;
-  accumulatedBalance: number;
-}
 
 interface VariableTransaction {
   transaction: TransactionType;
@@ -36,6 +41,7 @@ export default function Predictability() {
   const { transactions, isLoading } = useTransactions();
   const [selectedPeriod, setSelectedPeriod] = useState("6");
   const [variableTransactions, setVariableTransactions] = useState<VariableTransaction[]>([]);
+  const [simulatedItems, setSimulatedItems] = useState<SimulatedItem[]>([]);
 
   // Get current balance from all paid transactions
   const currentBalance = useMemo(() => {

@@ -1,0 +1,109 @@
+### Prompt → Replit AI
+
+> **Contexto**
+> O projeto é o Previzi (React + TypeScript + Recharts + Tailwind). A página de previsibilidade está em `client/src/pages/Predictability.tsx`.
+> Ela já exibe:
+>
+> * seletor de períodos (3 – 120 meses)
+> * KPIs (saldo atual, receita/ despesa projetadas, etc.)
+> * gráficos de linha (receitas por fonte, despesas por categoria, saldo acumulado)
+> * tabela detalhada
+> * cenários de investimento (10 % / 20 % / 30 % / 50 %)
+>
+> **Objetivo**
+> Transformar a página em uma ferramenta de decisão adicionando simulação “E se…?”, novos indicadores e ajustes visuais.
+
+---
+
+#### 1 – Simulador “E se…?”
+
+1. **Criar estado global local** `simulatedItems: SimulatedItem[]`
+
+   ```ts
+   type SimulatedItem = {
+     id: string;               // uuid
+     type: 'income' | 'expense';
+     description: string;
+     amount: number;           // positivo sempre
+     start: Date;
+     end: Date | null;         // null = infinito
+   };
+   ```
+2. **Modal/Drawer `ScenarioSimulator`**
+
+   * Campos: Type (select), Description (text), Amount (currency), Start (date), End (date/∞).
+   * Validação: amount > 0; start ≤ end (se definido).
+   * “Adicionar” → push no `simulatedItems`.
+3. Na tela, pequeno **badge contador** com “🔮 Cenários (N)”. Clicou → abre modal.
+4. Listar cenários ativos com toggle on/off e botão remover.
+
+#### 2 – Re-cálculo em tempo-real
+
+1. Extraia a função `buildProjection(periodMonths, baseTransactions)` para util separado.
+2. Ao calcular projeção:
+
+   ```ts
+   const effectiveTxs = [...firestoreTransactions, ...mappedSimulatedItems];
+   ```
+
+   Onde `mappedSimulatedItems` gera, na memória, instâncias mensais (similar à lógica das recorrentes fixas).
+3. KPIs, gráficos e tabela devem reagir ao toggle dos cenários (use memo).
+4. Quando qualquer cenário está ligado, mostre badge **“Simulado”** em todos os cards KPI.
+
+#### 3 – Indicadores de saúde financeira
+
+Adicionar 3 cards abaixo dos KPIs principais:
+
+```ts
+Taxa de Poupança  = (Receita – Despesa) / Receita média do período
+Comprometimento   = Despesa de dívidas fixas / Receita média
+Meses de Fôlego   = Saldo acumulado final / Despesa média
+```
+
+* Card recebe cor: verde/ amarelo/ vermelho conforme limites:
+
+  * Taxa < 20 % amarelo, < 0 vermelho.
+  * Comprometimento > 30 % amarelo, > 40 % vermelho.
+  * Fôlego < 3 vermelho, 3–6 amarelo, > 6 verde.
+
+#### 4 – Gráficos
+
+* **Saldo acumulado**
+
+  * Cor azul, área abaixo de zero em `fill="rgba(239,68,68,.2)"`.
+  * Adicionar `ReferenceLine y={0}` vermelho.
+* **Receitas / Despesas**
+
+  * Manter múltiplas linhas, mas aumentar strokeWidth = 3 e adicionar `Dot` maior.
+* **Highlight negativo**: usar `Customized` ou `ReferenceDot` para marcar primeiro mês com acumulado < 0 (⚠️).
+
+#### 5 – Heatmap (extra)
+
+* Novo componente `BalanceHeatmap` sob a tabela.
+* Usa `recharts/ScatterChart` ou grid CSS com classes Tailwind.
+* Cada célula colorida: verde → saldo > 0, vermelho → saldo < 0. Tooltip mostra mês/saldo.
+
+#### 6 – Painel de recomendações
+
+* Após calcular indicadores, gere array `recommendations` com ícone+texto:
+
+  * Saldo negativo futuro → “Reduza despesas em X ou aumente receita em Y”.
+  * Taxa de poupança baixa, etc.
+* Renderizar em `<Alert variant="warning" />` ou `Card`.
+
+#### 7 – Refino visual
+
+* Trocar label “120 meses (10 anos)” por “10 anos”.
+* Colocar painel de investimento (10 – 50 %) dentro de `<Accordion>` fechado por padrão.
+* Adicionar botão **Exportar PDF** (pode ficar TODO).
+
+---
+
+#### Aceitação
+
+* Togglar um cenário deve atualizar todos os KPIs, gráficos e tabela sem refresh.
+* Badge “Simulado” visível quando ≥1 cenário ON.
+* Primeiro mês com saldo acumulado < 0 aparece com ⚠️ no gráfico e na tabela.
+* Indicadores mudam cor conforme regras.
+
+> **Entrega**: pull request com alterações em `Predictability.tsx`, novo `components/ScenarioSimulator.tsx`, `utils/projection.ts`, e qualquer asset extra (ícones/companentes).
