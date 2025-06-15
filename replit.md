@@ -162,6 +162,21 @@ Preferred communication style: Simple, everyday language.
   - Better spacing and typography throughout dashboard charts
   - Improved color contrast and visual hierarchy for better readability
 
+- **Dashboard User Experience Enhancements**: Improved tooltips and navigation
+  - Pie chart tooltips now show category name along with value and percentage
+  - Enhanced tooltip design with proper formatting and clear information hierarchy
+  - "Ver todas" button in recent transactions now redirects to transactions page
+  - Better navigation flow between Dashboard and detailed transaction views
+
+- **Sidebar Menu Visual Overhaul**: Professional design with enhanced usability
+  - Added proper icon for "Previsibilidade" menu item (fas fa-chart-line)
+  - Improved collapse button positioning and styling with blue accent colors
+  - Enhanced visual design with gradient backgrounds and rounded corners
+  - Better hover effects and active state indicators with shadow effects
+  - Improved responsive design for mobile and desktop viewing
+  - Enhanced user profile section with better typography and layout
+  - Added proper logout button styling with red accent for clear action indication
+
 - **Fixed AddTransactionModal Form Reset Issue**: Implemented automatic form clearing when modal opens
   - Added useEffect to automatically reset all form fields when modal opens
   - Form now clears previous transaction data and starts fresh each time

@@ -107,24 +107,44 @@ export default function Layout({ children }: LayoutProps) {
           </nav>
 
           {/* User Profile */}
-          <div className="px-4 py-3 border-t border-gray-200">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                <i className="fas fa-user text-primary text-sm"></i>
+          <div className="px-3 py-4 border-t border-blue-100 bg-white/30">
+            {!isSidebarCollapsed ? (
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-md">
+                    <i className="fas fa-user text-white text-sm"></i>
+                  </div>
+                  <div className="ml-3 flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate">
+                      {currentUser?.displayName || currentUser?.email?.split('@')[0] || "Usuário"}
+                    </p>
+                    <p className="text-xs text-gray-600 truncate">
+                      {currentUser?.email || "user@example.com"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-700 rounded-lg transition-all duration-200 border border-transparent hover:border-red-200"
+                >
+                  <i className="fas fa-sign-out-alt mr-3 text-red-500"></i>
+                  Sair da Conta
+                </button>
               </div>
-              <div className="ml-2 flex-1">
-                <p className="text-sm font-medium text-gray-900">
-                  {currentUser?.displayName || "Usuário"}
-                </p>
-                <p className="text-xs text-gray-500">{currentUser?.email}</p>
+            ) : (
+              <div className="flex flex-col items-center space-y-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-md">
+                  <i className="fas fa-user text-white text-sm"></i>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200"
+                  title="Sair da Conta"
+                >
+                  <i className="fas fa-sign-out-alt text-sm"></i>
+                </button>
               </div>
-              <button
-                onClick={handleLogout}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <i className="fas fa-sign-out-alt"></i>
-              </button>
-            </div>
+            )}
           </div>
         </div>
       </div>
