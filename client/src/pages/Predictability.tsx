@@ -113,6 +113,7 @@ export default function Predictability() {
       });
 
       const monthlyBalance = monthlyIncome - monthlyExpenses;
+      // Only accumulate the net balance (what's left over), not the total income/expenses
       accumulatedBalance += monthlyBalance;
 
       projections.push({
@@ -128,8 +129,8 @@ export default function Predictability() {
     return projections;
   }, [transactions, selectedPeriod, currentBalance, canCalculateProjections]);
 
-  // Calculate summary statistics
-  const summaryStats = useMemo(() => {
+  // Calculate comprehensive financial analysis
+  const financialAnalysis = useMemo(() => {
     if (projectionData.length === 0) return null;
 
     const totalIncome = projectionData.reduce((sum, p) => sum + p.income, 0);
@@ -137,14 +138,117 @@ export default function Predictability() {
     const finalBalance = projectionData[projectionData.length - 1]?.accumulatedBalance || 0;
     const avgMonthlyBalance = projectionData.reduce((sum, p) => sum + p.monthlyBalance, 0) / projectionData.length;
 
+    // Analyze income sources
+    const incomeBySource = new Map<string, number>();
+    const expensesByCategory = new Map<string, number>();
+    const recurringIncome: number[] = [];
+    const recurringExpenses: number[] = [];
+    const fixedExpenses: number[] = [];
+
+    transactions.forEach(t => {
+      if (t.recurring && t.amount) {
+        if (t.type === 'income') {
+          const source = t.source || 'Não informado';
+          incomeBySource.set(source, (incomeBySource.get(source) || 0) + (t.amount * parseInt(selectedPeriod)));
+          recurringIncome.push(t.amount);
+        } else {
+          expensesByCategory.set(t.category, (expensesByCategory.get(t.category) || 0) + (t.amount * parseInt(selectedPeriod)));
+          if (t.isVariableAmount) {
+            recurringExpenses.push(t.amount);
+          } else {
+            fixedExpenses.push(t.amount);
+          }
+        }
+      }
+    });
+
+    // Calculate investment scenarios
+    const investmentScenarios = [10, 20, 30, 50].map(percentage => {
+      const investmentAmount = (finalBalance * percentage) / 100;
+      const remainingBalance = finalBalance - investmentAmount;
+      return {
+        percentage,
+        investmentAmount,
+        remainingBalance,
+        potentialReturn6Months: investmentAmount * 1.06, // 6% return assumption
+        potentialReturn12Months: investmentAmount * 1.12, // 12% return assumption
+      };
+    });
+
     return {
       totalIncome,
       totalExpenses,
       finalBalance,
       avgMonthlyBalance,
-      projectedMonths: projectionData.length
+      projectedMonths: projectionData.length,
+      incomeBySource: Array.from(incomeBySource.entries()).sort((a, b) => b[1] - a[1]),
+      expensesByCategory: Array.from(expensesByCategory.entries()).sort((a, b) => b[1] - a[1]),
+      recurringIncomeTotal: recurringIncome.reduce((sum, amount) => sum + amount, 0) * parseInt(selectedPeriod),
+      recurringExpensesTotal: recurringExpenses.reduce((sum, amount) => sum + amount, 0) * parseInt(selectedPeriod),
+      fixedExpensesTotal: fixedExpenses.reduce((sum, amount) => sum + amount, 0) * parseInt(selectedPeriod),
+      investmentScenarios,
+      topIncomeSource: incomeBySource.size > 0 ? Array.from(incomeBySource.entries())[0] : null,
+      topExpenseCategory: expensesByCategory.size > 0 ? Array.from(expensesByCategory.entries())[0] : null,
     };
-  }, [projectionData]);
+  }, [projectionData, transactions, selectedPeriod]);
+
+  // Generate evolution data for income sources
+  const incomeEvolutionData = useMemo(() => {
+    const months = parseInt(selectedPeriod);
+    const currentDate = new Date();
+    const data = [];
+
+    for (let i = 0; i < months; i++) {
+      const projectionDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + i + 1, 1);
+      const monthLabel = projectionDate.toLocaleDateString('pt-BR', { 
+        month: 'short', 
+        year: i < 12 ? undefined : '2-digit' 
+      });
+
+      const monthData: any = { month: monthLabel };
+      const sources = new Set(transactions.filter(t => t.recurring && t.type === 'income').map(t => t.source || 'Não informado'));
+
+      sources.forEach(source => {
+        const sourceIncome = transactions
+          .filter(t => t.recurring && t.type === 'income' && (t.source || 'Não informado') === source)
+          .reduce((sum, t) => sum + (t.amount || 0), 0);
+        monthData[source] = sourceIncome;
+      });
+
+      data.push(monthData);
+    }
+
+    return data;
+  }, [transactions, selectedPeriod]);
+
+  // Generate evolution data for expense categories
+  const expenseEvolutionData = useMemo(() => {
+    const months = parseInt(selectedPeriod);
+    const currentDate = new Date();
+    const data = [];
+
+    for (let i = 0; i < months; i++) {
+      const projectionDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + i + 1, 1);
+      const monthLabel = projectionDate.toLocaleDateString('pt-BR', { 
+        month: 'short', 
+        year: i < 12 ? undefined : '2-digit' 
+      });
+
+      const monthData: any = { month: monthLabel };
+      const categories = new Set(transactions.filter(t => t.recurring && t.type === 'expense').map(t => t.category));
+
+      categories.forEach(category => {
+        const categoryExpense = transactions
+          .filter(t => t.recurring && t.type === 'expense' && t.category === category)
+          .reduce((sum, t) => sum + (t.amount || 0), 0);
+        monthData[category] = categoryExpense;
+      });
+
+      data.push(monthData);
+    }
+
+    return data;
+  }, [transactions, selectedPeriod]);
 
   if (isLoading) {
     return (
@@ -236,7 +340,7 @@ export default function Predictability() {
         </Card>
       </motion.div>
 
-      {canCalculateProjections && summaryStats && (
+      {canCalculateProjections && financialAnalysis && (
         <>
           {/* Summary Cards */}
           <motion.div
@@ -254,7 +358,7 @@ export default function Predictability() {
                   <div>
                     <p className="text-xs text-gray-600">Receita Total Projetada</p>
                     <p className="text-lg font-bold text-green-600">
-                      R$ {summaryStats.totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      R$ {financialAnalysis.totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                   </div>
                 </div>
@@ -270,7 +374,7 @@ export default function Predictability() {
                   <div>
                     <p className="text-xs text-gray-600">Despesa Total Projetada</p>
                     <p className="text-lg font-bold text-red-600">
-                      R$ {summaryStats.totalExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      R$ {financialAnalysis.totalExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                   </div>
                 </div>
@@ -285,8 +389,8 @@ export default function Predictability() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-600">Saldo Final Projetado</p>
-                    <p className={`text-lg font-bold ${summaryStats.finalBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      R$ {summaryStats.finalBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    <p className={`text-lg font-bold ${financialAnalysis.finalBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      R$ {financialAnalysis.finalBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                   </div>
                 </div>
