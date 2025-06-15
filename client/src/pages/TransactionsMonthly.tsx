@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { ChevronLeft, ChevronRight, Calendar, Filter, Search, Plus, Trash2, Edit, Pencil, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import MonthYearPicker from "../components/MonthYearPicker";
 import { getTransactionsByMonth, updateTransaction, deleteTransaction, parseMonthString, subscribeToMonthlyTransactions, deleteRecurringTransactionWithOptions } from "../utils/firestore";
 import { toast } from "sonner";
 import AddTransactionModal from "../components/AddTransactionModal";
@@ -333,9 +334,11 @@ export default function TransactionsMonthly() {
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="font-medium min-w-32 text-center">
-                {getMonthName(selectedMonth)}
-              </span>
+              <MonthYearPicker 
+                value={selectedMonth}
+                onChange={setSelectedMonth}
+                className="font-medium"
+              />
               <Button
                 variant="outline"
                 size="sm"
