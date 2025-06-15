@@ -522,6 +522,19 @@ export default function Transactions() {
         }}
         transaction={editingTransaction}
       />
+
+      {/* Modal de atualização de valor base */}
+      <UpdateRecurringBaseValueModal
+        isOpen={isUpdateBaseValueModalOpen}
+        onClose={() => {
+          setIsUpdateBaseValueModalOpen(false);
+          setUpdatingTransaction(null);
+        }}
+        transaction={updatingTransaction}
+        onUpdated={() => {
+          // Não precisa recarregar manualmente - o listener em tempo real atualiza automaticamente
+        }}
+      />
     </motion.div>
   );
 }
