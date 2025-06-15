@@ -7,10 +7,39 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { motion } from "framer-motion";
+import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 
 export default function Dashboard() {
   const { transactions, isLoading, error } = useTransactions();
   const [chartPeriod, setChartPeriod] = useState("6");
+  
+  // Add month filter state - defaults to current month
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+
+  // Helper function to get month name in Portuguese
+  const getMonthName = (monthString: string) => {
+    const [year, month] = monthString.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+    return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  };
+
+  // Helper function to navigate months
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const currentDate = new Date(year, month - 1, 1);
+    
+    if (direction === 'prev') {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+    } else {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+    }
+    
+    const newMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+    setSelectedMonth(newMonth);
+  };
 
   if (isLoading) {
     return (
@@ -42,13 +71,12 @@ export default function Dashboard() {
     );
   }
 
-  // Calculate summary data
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
+  // Calculate summary data for selected month
+  const [selectedYear, selectedMonthNum] = selectedMonth.split('-').map(Number);
   
   const currentMonthTransactions = transactions.filter(t => {
     const transactionDate = new Date(t.date);
-    return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
+    return transactionDate.getMonth() === (selectedMonthNum - 1) && transactionDate.getFullYear() === selectedYear;
   });
 
   const totalIncome = currentMonthTransactions
@@ -185,6 +213,46 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
+      {/* Month Navigation */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-blue-50/30">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigateMonth('prev')}
+                className="flex items-center space-x-2 hover:bg-blue-50"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span>Anterior</span>
+              </Button>
+              
+              <div className="flex items-center space-x-3">
+                <Calendar className="h-6 w-6 text-blue-600" />
+                <h2 className="text-xl font-bold text-gray-800 capitalize">
+                  {getMonthName(selectedMonth)}
+                </h2>
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigateMonth('next')}
+                className="flex items-center space-x-2 hover:bg-blue-50"
+              >
+                <span>Próximo</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <motion.div

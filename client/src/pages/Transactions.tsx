@@ -239,24 +239,49 @@ export default function Transactions() {
           {/* Resumo de quantidade de transações */}
           {filteredTransactions.length > 0 && (
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <div className="flex flex-wrap gap-6 text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">📌</span>
-                  <span className="font-semibold text-gray-700">
-                    Total de Transações: <span className="text-blue-600">{filteredTransactions.length}</span>
-                  </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Resumo por tipo */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-gray-800 text-sm">Resumo por Tipo</h4>
+                  <div className="flex flex-wrap gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">📌</span>
+                      <span className="font-semibold text-gray-700">
+                        Total: <span className="text-blue-600">{filteredTransactions.length}</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">✅</span>
+                      <span className="font-medium text-green-700">
+                        Receitas: <span className="font-bold">{filteredTransactions.filter(t => t.type === 'income').length}</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">❌</span>
+                      <span className="font-medium text-red-700">
+                        Despesas: <span className="font-bold">{filteredTransactions.filter(t => t.type === 'expense').length}</span>
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">✅</span>
-                  <span className="font-medium text-green-700">
-                    Receitas: <span className="font-bold">{filteredTransactions.filter(t => t.type === 'income').length}</span>
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">❌</span>
-                  <span className="font-medium text-red-700">
-                    Despesas: <span className="font-bold">{filteredTransactions.filter(t => t.type === 'expense').length}</span>
-                  </span>
+
+                {/* Resumo por status de pagamento */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-gray-800 text-sm">Status de Pagamento</h4>
+                  <div className="flex flex-wrap gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">💰</span>
+                      <span className="font-medium text-green-700">
+                        Pagas: <span className="font-bold">{filteredTransactions.filter(t => t.status === 'paid').length}</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">⏳</span>
+                      <span className="font-medium text-orange-700">
+                        Em Aberto: <span className="font-bold">{filteredTransactions.filter(t => t.status === 'pending').length}</span>
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
