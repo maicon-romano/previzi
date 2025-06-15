@@ -106,6 +106,25 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### June 15, 2025
+- **Comprehensive Scenario Simulation System**: Transformed Predictability page into advanced financial decision-making tool
+  - **"What if?" Simulator**: New ScenarioSimulator component with modal interface for creating income/expense scenarios
+  - **Real-time Projection Updates**: All KPIs, charts, and tables react instantly to scenario toggles
+  - **Financial Health Indicators**: Added Taxa de Poupança, Comprometimento, and Meses de Fôlego with color-coded thresholds
+  - **Enhanced Visualizations**: Area charts with negative balance highlighting, reference lines, and gradient fills
+  - **Smart Recommendations Engine**: AI-generated financial advice based on projection analysis
+  - **Investment Scenario Analysis**: Collapsed accordion with 10-50% investment options and return calculations
+  - **Modular Architecture**: Created utils/projection.ts with reusable financial calculation functions
+  - **SimulatedItem Type System**: Complete type safety for scenario management with enable/disable functionality
+  - **Period Labels Refinement**: Cleaned up period options (e.g., "10 anos" instead of "120 meses (10 anos)")
+  - **Simulation Badges**: Visual indicators when scenarios are active across all financial displays
+  - **Enhanced KPI Cards**: Added payment status breakdown to TransactionsMonthly page with 6 comprehensive metrics
+
+- **Dashboard Month Filtering Enhancement**: Added month navigation with previous/next buttons
+  - Dashboard now filters all data (income, expenses, charts) based on selected month
+  - Defaults to current month with intuitive navigation controls
+  - Maintains consistency with other page navigation patterns
+
 ### June 14, 2025
 - **Critical Fixes for Infinite Recurring Transaction System**: Resolved date validation and deletion issues
   - Fixed date validation: infinite transactions only appear from their original month forward
