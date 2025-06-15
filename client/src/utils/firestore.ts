@@ -781,6 +781,70 @@ export const generateInfiniteRecurringTransactionForMonth = async (
 };
 
 // Função para verificar e gerar transações recorrentes infinitas dinamicamente
+// Função para atualizar valor base de transações recorrentes variáveis futuras
+export const updateRecurringBaseValue = async (
+  userId: string,
+  originalTransaction: TransactionType,
+  newBaseValue: number,
+  overwriteEdited: boolean = false
+): Promise<number> => {
+  try {
+    if (!originalTransaction.recurrenceGroupId) {
+      throw new Error("Transação deve ter um recurrenceGroupId para atualização em massa");
+    }
+
+    // Buscar todas as transações da série recorrente
+    const seriesQuery = query(
+      collection(db, "users", userId, "transactions"),
+      where("recurrenceGroupId", "==", originalTransaction.recurrenceGroupId)
+    );
+
+    const seriesSnapshot = await getDocs(seriesQuery);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let updatedCount = 0;
+    const updatePromises: Promise<void>[] = [];
+
+    for (const doc of seriesSnapshot.docs) {
+      const data = doc.data();
+      const transactionDate = data.date.toDate();
+      
+      // Só atualizar transações futuras
+      if (transactionDate >= today) {
+        // Se overwriteEdited for false, só atualizar se amount for null ou igual ao valor original
+        if (!overwriteEdited) {
+          const shouldUpdate = data.amount === null || 
+                              data.amount === undefined || 
+                              data.amount === originalTransaction.amount;
+          
+          if (!shouldUpdate) {
+            continue; // Pular esta transação
+          }
+        }
+
+        // Atualizar a transação
+        const updatePromise = updateDoc(doc.ref, {
+          amount: newBaseValue
+        });
+        
+        updatePromises.push(updatePromise);
+        updatedCount++;
+      }
+    }
+
+    // Executar todas as atualizações
+    await Promise.all(updatePromises);
+
+    console.log(`✅ Atualizadas ${updatedCount} transações da série ${originalTransaction.description}`);
+    return updatedCount;
+
+  } catch (error) {
+    console.error('❌ Erro ao atualizar valor base das transações recorrentes:', error);
+    throw error;
+  }
+};
+
 export const checkAndGenerateInfiniteRecurringTransactions = async (
   userId: string,
   year: number,

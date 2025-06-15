@@ -1,0 +1,89 @@
+Preciso de dois ajustes essenciais nas transações recorrentes variáveis (`isVariableAmount: true`) no sistema Previzi:
+
+---
+
+🟢 PARTE 1: CORREÇÃO URGENTE NA CRIAÇÃO DE TRANSAÇÕES RECORRENTES VARIÁVEIS (EVITAR amount: null)
+
+Problema atual:  
+Mesmo quando eu preencho o campo "Valor" (`amount`) ao criar uma transação recorrente variável, o sistema está salvando a transação com:
+
+```
+
+amount: null
+
+````
+
+✅ O que precisa ser corrigido:
+
+1. No `AddTransactionModal.tsx`, durante o `onSubmit`, o campo `amount`:
+
+- Deve ser convertido corretamente de string para número antes de salvar no Firestore.
+
+- Nunca deve ser salvo como `null` se o usuário preencheu o campo.
+
+Exemplo de conversão mínima aceitável:
+
+```ts
+const parsedAmount = Number(formData.amount.toString().replace(',', '.'));
+
+if (isNaN(parsedAmount) || parsedAmount <= 0) {
+  toast.error("Informe um valor válido para a transação.");
+  return;
+}
+
+transactionData.amount = parsedAmount;
+````
+
+2. Além disso:
+   Se a transação for `recurring: true` e `isVariableAmount: true`, o sistema só deve permitir a criação se o campo `amount` tiver um valor numérico válido.
+
+✅ Isso é fundamental para a lógica de previsibilidade futura.
+
+---
+
+🟢 PARTE 2: FUNÇÃO DE "AJUSTE EM MASSA" PARA RECORRENTES VARIÁVEIS (ATUALIZAÇÃO DE VALOR FUTURO)
+
+Problema atual:
+Quando o valor de uma transação recorrente variável muda ao longo dos meses (exemplo: meu salário subiu de R\$ 3.200 para R\$ 3.500), hoje o sistema **não oferece nenhuma forma de atualizar os próximos meses futuros com esse novo valor base**.
+
+✅ O que quero implementar:
+
+Criar uma funcionalidade de **Ajuste em Massa de Valor Base para Recorrentes Variáveis**.
+
+✅ Regras para essa nova funcionalidade:
+
+1. O usuário deve poder selecionar uma transação de uma série recorrente (`recurrenceGroupId` igual).
+
+2. O sistema deve exibir um campo para o novo valor base (exemplo: R\$ 3.500).
+
+3. Após confirmar:
+
+👉 O sistema deve atualizar o campo `amount` de todas as transações futuras que:
+
+* Tenham o mesmo `recurrenceGroupId`
+* Sejam `isVariableAmount: true`
+* Estejam com `amount === null` **ou** (se o usuário marcar uma checkbox opcional) sobrescrever mesmo as já editadas.
+
+4. Essa funcionalidade pode ficar:
+
+* Dentro do modal de edição de transação
+* Ou em um novo modal: **“Atualizar Valor Base da Recorrência”**
+
+5. Após o ajuste, o sistema deve exibir um toast de confirmação como:
+
+```
+"Atualizamos o valor base de X transações futuras da série 'Salário'."
+```
+
+---
+
+✅ Resumo Final:
+
+✅ Corrigir de forma definitiva o problema de salvar transações com `amount: null`
+✅ Garantir que todas as novas transações variáveis tenham um valor válido no momento da criação
+✅ Implementar um **sistema de atualização em massa** para permitir que o usuário ajuste o valor base das próximas recorrências variáveis.
+
+Tecnologias: React, Firebase Firestore.
+
+O objetivo: Garantir que a previsibilidade futura funcione corretamente, mesmo com mudanças de valor em transações variáveis ao longo do tempo.
+

@@ -197,16 +197,16 @@ export default function AddTransactionModal({ isOpen, onClose, onTransactionAdde
       const transactionDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
       const monthRef = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
       
-      // Para transações recorrentes com valor variável, permitir amount como null
-      let amount: number | null = null;
+      // SEMPRE converter e validar o amount, mesmo para transações variáveis
+      const amount = parseCurrency(data.amount);
       
-      if (!data.recurring || !data.isVariableAmount) {
-        // Usar a função parseCurrency para converter corretamente
-        amount = parseCurrency(data.amount);
-        
-        if (isNaN(amount) || amount <= 0) {
-          throw new Error("Valor deve ser um número positivo");
-        }
+      if (isNaN(amount) || amount <= 0) {
+        throw new Error("Valor deve ser um número positivo");
+      }
+
+      // Para transações recorrentes variáveis, o valor é obrigatório
+      if (data.recurring && data.isVariableAmount && (!data.amount || data.amount.trim() === "")) {
+        throw new Error("Transações recorrentes variáveis precisam de um valor base definido");
       }
 
       // Preparar dados de recorrência

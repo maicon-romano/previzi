@@ -28,6 +28,7 @@ import { getTransactionsByMonth, updateTransaction, deleteTransaction, parseMont
 import { toast } from "sonner";
 import AddTransactionModal from "../components/AddTransactionModal";
 import EditTransactionModal from "../components/EditTransactionModal";
+import UpdateRecurringBaseValueModal from "../components/UpdateRecurringBaseValueModal";
 import Swal from "sweetalert2";
 
 export default function TransactionsMonthly() {
@@ -45,6 +46,8 @@ export default function TransactionsMonthly() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<TransactionType | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isUpdateBaseValueModalOpen, setIsUpdateBaseValueModalOpen] = useState(false);
+  const [updatingTransaction, setUpdatingTransaction] = useState<TransactionType | null>(null);
 
   const monthNames = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -93,6 +96,11 @@ export default function TransactionsMonthly() {
   const handleEditTransaction = (transaction: TransactionType) => {
     setEditingTransaction(transaction);
     setIsEditModalOpen(true);
+  };
+
+  const handleUpdateBaseValue = (transaction: TransactionType) => {
+    setUpdatingTransaction(transaction);
+    setIsUpdateBaseValueModalOpen(true);
   };
 
   const handleStatusToggle = async (transactionId: string, currentStatus: string) => {
