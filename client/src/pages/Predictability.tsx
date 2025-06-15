@@ -406,7 +406,7 @@ export default function Predictability() {
                   <div>
                     <p className="text-xs text-gray-600">Média de Despesa Mensal</p>
                     <p className="text-lg font-bold text-orange-600">
-                      R$ {(summaryStats.totalExpenses / parseInt(selectedPeriod)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      R$ {(financialAnalysis.totalExpenses / parseInt(selectedPeriod)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                   </div>
                 </div>
@@ -421,8 +421,8 @@ export default function Predictability() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-600">Média de Saldo Mensal</p>
-                    <p className={`text-lg font-bold ${summaryStats.avgMonthlyBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      R$ {summaryStats.avgMonthlyBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    <p className={`text-lg font-bold ${financialAnalysis.avgMonthlyBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      R$ {financialAnalysis.avgMonthlyBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                   </div>
                 </div>
@@ -430,7 +430,209 @@ export default function Predictability() {
             </Card>
           </motion.div>
 
-          {/* Enhanced Chart */}
+          {/* Financial Intelligence Reports */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+          >
+            {/* Top Income Sources */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <i className="fas fa-trophy text-yellow-600"></i>
+                  Maiores Receitas por Fonte
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {financialAnalysis.incomeBySource.length > 0 ? (
+                  <div className="space-y-3">
+                    {financialAnalysis.incomeBySource.slice(0, 5).map(([source, amount], index) => (
+                      <div key={source} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                            <span className="text-green-600 font-bold text-sm">#{index + 1}</span>
+                          </div>
+                          <span className="font-medium text-green-800">{source}</span>
+                        </div>
+                        <span className="font-bold text-green-600">
+                          R$ {amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-gray-500 py-4">Nenhuma receita recorrente encontrada</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Top Expense Categories */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <i className="fas fa-exclamation-triangle text-red-600"></i>
+                  Maiores Despesas por Categoria
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {financialAnalysis.expensesByCategory.length > 0 ? (
+                  <div className="space-y-3">
+                    {financialAnalysis.expensesByCategory.slice(0, 5).map(([category, amount], index) => (
+                      <div key={category} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                            <span className="text-red-600 font-bold text-sm">#{index + 1}</span>
+                          </div>
+                          <span className="font-medium text-red-800">{category}</span>
+                        </div>
+                        <span className="font-bold text-red-600">
+                          R$ {amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-gray-500 py-4">Nenhuma despesa recorrente encontrada</p>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Investment Scenarios */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <i className="fas fa-chart-pie text-purple-600"></i>
+                  Cenários de Investimento do Saldo Final
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {financialAnalysis.investmentScenarios.map((scenario) => (
+                    <div key={scenario.percentage} className="p-4 border border-purple-200 rounded-lg bg-purple-50">
+                      <div className="text-center mb-3">
+                        <div className="text-lg font-bold text-purple-600">{scenario.percentage}%</div>
+                        <div className="text-xs text-gray-600">do saldo final</div>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Investir:</span>
+                          <span className="font-medium">R$ {scenario.investmentAmount.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Restante:</span>
+                          <span className="font-medium">R$ {scenario.remainingBalance.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                        </div>
+                        <div className="border-t pt-2">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-green-600">6 meses (6%):</span>
+                            <span className="font-bold text-green-600">R$ {scenario.potentialReturn6Months.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-green-600">12 meses (12%):</span>
+                            <span className="font-bold text-green-600">R$ {scenario.potentialReturn12Months.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Income Evolution Chart */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <i className="fas fa-chart-line text-green-600"></i>
+                  Evolução de Receitas por Fonte ({selectedPeriod} meses)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={incomeEvolutionData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                      <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                      <YAxis tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`} tick={{ fontSize: 12 }} />
+                      <Tooltip 
+                        formatter={(value: any) => [`R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Receita']}
+                        labelFormatter={(label) => `Mês: ${label}`}
+                      />
+                      <Legend />
+                      {financialAnalysis.incomeBySource.slice(0, 5).map(([source], index) => (
+                        <Line
+                          key={source}
+                          type="monotone"
+                          dataKey={source}
+                          stroke={['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'][index]}
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                        />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Expense Evolution Chart */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.7 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <i className="fas fa-chart-line text-red-600"></i>
+                  Evolução de Despesas por Categoria ({selectedPeriod} meses)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={expenseEvolutionData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                      <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                      <YAxis tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`} tick={{ fontSize: 12 }} />
+                      <Tooltip 
+                        formatter={(value: any) => [`R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Despesa']}
+                        labelFormatter={(label) => `Mês: ${label}`}
+                      />
+                      <Legend />
+                      {financialAnalysis.expensesByCategory.slice(0, 5).map(([category], index) => (
+                        <Line
+                          key={category}
+                          type="monotone"
+                          dataKey={category}
+                          stroke={['#EF4444', '#F59E0B', '#8B5CF6', '#EC4899', '#6B7280'][index]}
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                        />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Enhanced Accumulated Balance Chart */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
