@@ -144,6 +144,24 @@ Preferred communication style: Simple, everyday language.
   - Consistent behavior across Dashboard, Transactions, and Predictability pages
   - Improved user workflow by starting with most relevant timeframe
 
+- **Enhanced Transaction Counting and Visualization**: Improved data analysis capabilities
+  - Added transaction count summary at top of transaction tables
+  - Visual breakdown showing total transactions, income count, and expense count
+  - Sequential numbering (#1, #2, #3...) for all transactions in tables
+  - Applied consistently across Transactions and TransactionsMonthly pages
+  - Clear visual indicators with emojis (📌 Total, ✅ Receitas, ❌ Despesas)
+
+- **Major Dashboard Chart Improvements**: Enhanced visual analysis and readability
+  - Increased chart sizes from small containers to 320px height (h-80)
+  - Improved pie chart with larger radius (120px) and direct percentage labels
+  - Enhanced legends showing both absolute values (R$) and percentages
+  - Detailed category breakdown with individual cards for each category
+  - Line chart improvements with thicker lines, larger dots, and better tooltips
+  - Enhanced tooltip styling with larger fonts and better contrast
+  - Period filter options (3, 6, 12, 18 months) for evolution charts
+  - Better spacing and typography throughout dashboard charts
+  - Improved color contrast and visual hierarchy for better readability
+
 - **Fixed AddTransactionModal Form Reset Issue**: Implemented automatic form clearing when modal opens
   - Added useEffect to automatically reset all form fields when modal opens
   - Form now clears previous transaction data and starts fresh each time

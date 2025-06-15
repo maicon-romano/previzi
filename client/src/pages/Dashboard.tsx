@@ -385,79 +385,77 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               {evolutionData.length > 0 ? (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                  {/* Chart */}
-                  <div className="lg:col-span-2">
-                    <div className="chart-container">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={evolutionData}>
-                          <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                          <XAxis 
-                            dataKey="month" 
-                            tick={{ fontSize: 12 }}
-                            stroke="#6B7280"
-                          />
-                          <YAxis 
-                            tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
-                            tick={{ fontSize: 12 }}
-                            stroke="#6B7280"
-                          />
-                          <Tooltip 
-                            content={({ active, payload, label }) => {
-                              if (active && payload && payload.length) {
-                                const data = payload[0].payload;
-                                const sources = data.sources || {};
-                                return (
-                                  <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-                                    <p className="font-medium text-gray-900 mb-2">{label}</p>
-                                    <div className="space-y-1">
-                                      <p className="text-green-600 font-semibold">
-                                        Total: R$ {Number(data.income).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                      </p>
-                                      {Object.entries(sources).length > 0 && (
-                                        <div className="mt-2 pt-2 border-t border-gray-100">
-                                          <p className="text-xs font-medium text-gray-600 mb-1">Fontes:</p>
-                                          {Object.entries(sources).map(([source, amount]) => (
-                                            <div key={source} className="flex justify-between text-xs">
-                                              <span className="text-gray-600">{source}:</span>
-                                              <span className="font-medium">R$ {Number(amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      )}
-                                    </div>
+                <div className="space-y-6">
+                  {/* Larger Chart */}
+                  <div className="h-80 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={evolutionData}>
+                        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                        <XAxis 
+                          dataKey="month" 
+                          tick={{ fontSize: 14 }}
+                          stroke="#6B7280"
+                        />
+                        <YAxis 
+                          tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                          tick={{ fontSize: 14 }}
+                          stroke="#6B7280"
+                        />
+                        <Tooltip 
+                          content={({ active, payload, label }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload;
+                              const sources = data.sources || {};
+                              return (
+                                <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg">
+                                  <p className="font-semibold text-gray-900 mb-3">{label}</p>
+                                  <div className="space-y-2">
+                                    <p className="text-green-600 font-bold text-base">
+                                      Total: R$ {Number(data.income).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </p>
+                                    {Object.entries(sources).length > 0 && (
+                                      <div className="mt-3 pt-3 border-t border-gray-100">
+                                        <p className="text-sm font-medium text-gray-600 mb-2">Fontes:</p>
+                                        {Object.entries(sources).map(([source, amount]) => (
+                                          <div key={source} className="flex justify-between text-sm">
+                                            <span className="text-gray-600">{source}:</span>
+                                            <span className="font-medium">R$ {Number(amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
-                                );
-                              }
-                              return null;
-                            }}
-                          />
-                          <Line 
-                            type="monotone" 
-                            dataKey="income" 
-                            stroke="#10B981" 
-                            strokeWidth={3}
-                            dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
-                            name="Receitas"
-                          />
-                          <Line 
-                            type="monotone" 
-                            dataKey="balance" 
-                            stroke="#3B82F6" 
-                            strokeWidth={2}
-                            strokeDasharray="5 5"
-                            dot={{ fill: '#3B82F6', strokeWidth: 2, r: 3 }}
-                            name="Saldo"
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="income" 
+                          stroke="#10B981" 
+                          strokeWidth={4}
+                          dot={{ fill: '#10B981', strokeWidth: 2, r: 6 }}
+                          name="Receitas"
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="balance" 
+                          stroke="#3B82F6" 
+                          strokeWidth={3}
+                          strokeDasharray="5 5"
+                          dot={{ fill: '#3B82F6', strokeWidth: 2, r: 5 }}
+                          name="Saldo"
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
 
                   {/* Income Sources Breakdown */}
-                  <div className="space-y-3">
-                    <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1">
-                      <i className="fas fa-users text-xs"></i>
+                  <div className="space-y-4">
+                    <h4 className="text-base font-semibold text-gray-700 flex items-center gap-2">
+                      <i className="fas fa-users text-sm"></i>
                       Fontes do Mês Atual
                     </h4>
                     {incomeSourcesBreakdown.length > 0 ? (
