@@ -40,7 +40,7 @@ export default function Layout({ children }: LayoutProps) {
       "/categories": { title: "Categorias", subtitle: "Organize suas categorias de receitas e despesas" },
       "/settings": { title: "Configurações", subtitle: "Personalize sua experiência" },
     };
-    return titles[location] || titles["/dashboard"];
+    return titles[location.pathname] || titles["/dashboard"];
   };
 
   const pageInfo = getPageInfo();
@@ -76,11 +76,11 @@ export default function Layout({ children }: LayoutProps) {
           <nav className="flex-1 px-3 py-4">
             <ul className="space-y-2">
               {navigation.map((item) => {
-                const isActive = location === item.href || (location === "/" && item.href === "/dashboard");
+                const isActive = location.pathname === item.href || (location.pathname === "/" && item.href === "/dashboard");
                 return (
                   <li key={item.name}>
                     <Link
-                      href={item.href}
+                      to={item.href}
                       className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 group relative ${
                         isActive
                           ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg"
