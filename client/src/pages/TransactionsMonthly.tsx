@@ -580,6 +580,18 @@ export default function TransactionsMonthly() {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
+                          {/* Botão de ajuste em massa para recorrentes variáveis */}
+                          {transaction.recurring && transaction.isVariableAmount && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleUpdateBaseValue(transaction)}
+                              className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 transition-colors duration-200"
+                              title="Atualizar valor base da recorrência"
+                            >
+                              <i className="fas fa-sync-alt text-xs"></i>
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -615,6 +627,17 @@ export default function TransactionsMonthly() {
           setEditingTransaction(null);
         }}
         transaction={editingTransaction}
+      />
+
+      {/* Modal de atualização de valor base */}
+      <UpdateRecurringBaseValueModal
+        isOpen={isUpdateBaseValueModalOpen}
+        onClose={() => {
+          setIsUpdateBaseValueModalOpen(false);
+          setUpdatingTransaction(null);
+        }}
+        transaction={updatingTransaction}
+        onUpdated={loadTransactions}
       />
     </div>
   );

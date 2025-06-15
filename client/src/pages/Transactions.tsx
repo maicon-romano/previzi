@@ -27,6 +27,7 @@ import { motion } from "framer-motion";
 import { getTransactionsByMonth, updateTransaction, deleteTransaction, subscribeToMonthlyTransactions } from "../utils/firestore";
 import { useToast } from "@/hooks/use-toast";
 import EditTransactionModal from "../components/EditTransactionModal";
+import UpdateRecurringBaseValueModal from "../components/UpdateRecurringBaseValueModal";
 import Swal from "sweetalert2";
 
 export default function Transactions() {
@@ -44,6 +45,8 @@ export default function Transactions() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [editingTransaction, setEditingTransaction] = useState<TransactionType | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isUpdateBaseValueModalOpen, setIsUpdateBaseValueModalOpen] = useState(false);
+  const [updatingTransaction, setUpdatingTransaction] = useState<TransactionType | null>(null);
 
   const monthNames = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -121,6 +124,11 @@ export default function Transactions() {
   const handleEditTransaction = (transaction: TransactionType) => {
     setEditingTransaction(transaction);
     setIsEditModalOpen(true);
+  };
+
+  const handleUpdateBaseValue = (transaction: TransactionType) => {
+    setUpdatingTransaction(transaction);
+    setIsUpdateBaseValueModalOpen(true);
   };
 
   const handleStatusToggle = async (transactionId: string, currentStatus: string) => {
@@ -457,6 +465,18 @@ export default function Transactions() {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
+                          {/* Botão de ajuste em massa para recorrentes variáveis */}
+                          {transaction.recurring && transaction.isVariableAmount && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleUpdateBaseValue(transaction)}
+                              className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 transition-colors duration-200"
+                              title="Atualizar valor base da recorrência"
+                            >
+                              <i className="fas fa-sync-alt text-xs"></i>
+                            </Button>
+                          )}
                           <Button 
                             variant="ghost" 
                             size="sm" 
