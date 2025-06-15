@@ -147,7 +147,7 @@ const generateRecurringTransactions = async (userId: string, originalTransaction
     
     const futureTransaction: any = {
       type: originalTransaction.type,
-      amount: originalTransaction.isVariableAmount ? null : originalTransaction.amount, // Para variáveis, usar null
+      amount: originalTransaction.amount, // SEMPRE herdar o valor original, mesmo para variáveis
       category: originalTransaction.category,
       description: originalTransaction.description,
       source: originalTransaction.source,
@@ -745,7 +745,7 @@ export const generateInfiniteRecurringTransactionForMonth = async (
     // Criar nova transação para o mês específico
     const newTransaction: any = {
       type: originalTransaction.type,
-      amount: originalTransaction.isVariableAmount ? null : originalTransaction.amount,
+      amount: originalTransaction.amount, // SEMPRE herdar o valor original, mesmo para variáveis
       category: originalTransaction.category,
       description: originalTransaction.description,
       source: originalTransaction.source,

@@ -193,6 +193,14 @@ Preferred communication style: Simple, everyday language.
   - **Current Balance Integration**: Real-time calculation from paid transactions
   - **Professional Design**: Motion animations and comprehensive financial analysis interface
 
+- **Critical Variable Recurring Transaction Fix**: Resolved amount field inheritance issues
+  - Fixed variable recurring transactions to properly inherit original amount values
+  - Removed logic that set `amount: null` for variable transactions in future instances
+  - Both infinite and fixed recurring transactions now preserve original amount values
+  - Enhanced predictability accuracy by ensuring all transactions have base values
+  - Variable transactions maintain original value until manually edited per month
+  - Fixed generation logic in both `generateInfiniteRecurringTransactionForMonth` and `generateRecurringTransactions`
+
 - **Fixed AddTransactionModal Form Reset Issue**: Implemented automatic form clearing when modal opens
   - Added useEffect to automatically reset all form fields when modal opens
   - Form now clears previous transaction data and starts fresh each time

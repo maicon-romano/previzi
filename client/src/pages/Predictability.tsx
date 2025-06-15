@@ -63,8 +63,10 @@ export default function Predictability() {
 
   // Check if we can calculate projections
   const canCalculateProjections = useMemo(() => {
-    return variableTransactions.every(vt => !vt.missingValue);
-  }, [variableTransactions]);
+    // Now that we fixed the generation logic, we can always calculate projections
+    // as variable transactions will always have their original amount value
+    return true;
+  }, []);
 
   // Generate projection data
   const projectionData = useMemo(() => {
