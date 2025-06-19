@@ -8,14 +8,18 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { currentUser } = useAuth();
+  const { currentUser, loading } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!currentUser) {
+    if (!loading && !currentUser) {
       setLocation("/auth");
     }
-  }, [currentUser, setLocation]);
+  }, [currentUser, loading, setLocation]);
+
+  if (loading) {
+    return <div>Carregando...</div>; // Ou um loader melhor, se quiser
+  }
 
   if (!currentUser) {
     return null;

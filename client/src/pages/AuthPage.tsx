@@ -1,14 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "../contexts/AuthContext";
-import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
@@ -16,25 +15,56 @@ const loginSchema = z.object({
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
 });
 
-const registerSchema = z.object({
-  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-  confirmPassword: z.string(),
-}).refine(data => data.password === data.confirmPassword, {
-  message: "Senhas não coincidem",
-  path: ["confirmPassword"],
-});
+const registerSchema = z
+  .object({
+    name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+    email: z.string().email("Email inválido"),
+    password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Senhas não coincidem",
+    path: ["confirmPassword"],
+  });
 
 type LoginFormData = z.infer<typeof loginSchema>;
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
-  const { login, register, resetPassword, loginWithGoogle } = useAuth();
-  const [, setLocation] = useLocation();
+  const {
+    login,
+    register,
+    resetPassword,
+    loginWithGoogle,
+    currentUser,
+    loading,
+  } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // Detectar se voltou de um redirect do Google
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (
+      urlParams.has("redirect") ||
+      window.location.hash.includes("redirect")
+    ) {
+      setIsRedirecting(true);
+    }
+  }, []);
+
+  // Monitorar mudanças no usuário e forçar redirecionamento
+  useEffect(() => {
+    if (currentUser && !loading) {
+      console.log("Usuário autenticado detectado, redirecionando...");
+      const timer = setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [currentUser, loading]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -58,11 +88,18 @@ export default function AuthPage() {
     setIsLoading(true);
     try {
       await login(data.email, data.password);
-      setLocation("/dashboard");
+      toast({
+        title: "Login realizado com sucesso!",
+        description: "Redirecionando...",
+      });
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 500);
     } catch (error: any) {
       toast({
         title: "Erro no login",
-        description: error.message || "Verifique suas credenciais e tente novamente.",
+        description:
+          error.message || "Verifique suas credenciais e tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -74,11 +111,18 @@ export default function AuthPage() {
     setIsLoading(true);
     try {
       await register(data.email, data.password, data.name);
-      setLocation("/dashboard");
+      toast({
+        title: "Conta criada com sucesso!",
+        description: "Redirecionando...",
+      });
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 500);
     } catch (error: any) {
       toast({
         title: "Erro no cadastro",
-        description: error.message || "Não foi possível criar a conta. Tente novamente.",
+        description:
+          error.message || "Não foi possível criar a conta. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -90,14 +134,26 @@ export default function AuthPage() {
     setIsLoading(true);
     try {
       await loginWithGoogle();
-      setLocation("/dashboard");
+      // Se estiver usando redirect, mostrar mensagem apropriada
+      const isProduction =
+        window.location.hostname.includes("web.app") ||
+        window.location.hostname.includes("firebaseapp.com");
+
+      if (isProduction) {
+        toast({
+          title: "Redirecionando para o Google...",
+          description: "Você será redirecionado de volta após o login.",
+        });
+      }
     } catch (error: any) {
+      console.error("Erro no login com Google:", error);
       toast({
         title: "Erro no login com Google",
-        description: error.message || "Não foi possível fazer login com Google. Tente novamente.",
+        description:
+          error.message ||
+          "Não foi possível fazer login com Google. Tente novamente.",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -122,11 +178,30 @@ export default function AuthPage() {
     } catch (error: any) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível enviar o email de redefinição.",
+        description:
+          error.message || "Não foi possível enviar o email de redefinição.",
         variant: "destructive",
       });
     }
   };
+
+  // Se estiver carregando, voltando de redirect ou já logado, mostra loading
+  if (loading || currentUser || isRedirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>
+            {isRedirecting
+              ? "Processando login..."
+              : currentUser
+              ? "Redirecionando para o dashboard..."
+              : "Carregando..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-slate-100 p-4">
@@ -149,7 +224,10 @@ export default function AuthPage() {
               </TabsList>
 
               <TabsContent value="login" className="space-y-4">
-                <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
+                <form
+                  onSubmit={loginForm.handleSubmit(onLogin)}
+                  className="space-y-4"
+                >
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -192,16 +270,18 @@ export default function AuthPage() {
                     {isLoading ? "Entrando..." : "Entrar"}
                   </Button>
                 </form>
-                
+
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">Ou continue com</span>
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Ou continue com
+                    </span>
                   </div>
                 </div>
-                
+
                 <Button
                   type="button"
                   variant="outline"
@@ -232,7 +312,10 @@ export default function AuthPage() {
               </TabsContent>
 
               <TabsContent value="register" className="space-y-4">
-                <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-4">
+                <form
+                  onSubmit={registerForm.handleSubmit(onRegister)}
+                  className="space-y-4"
+                >
                   <div className="space-y-2">
                     <Label htmlFor="name">Nome completo</Label>
                     <Input
@@ -292,16 +375,18 @@ export default function AuthPage() {
                     {isLoading ? "Criando conta..." : "Criar conta"}
                   </Button>
                 </form>
-                
+
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">Ou continue com</span>
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Ou continue com
+                    </span>
                   </div>
                 </div>
-                
+
                 <Button
                   type="button"
                   variant="outline"

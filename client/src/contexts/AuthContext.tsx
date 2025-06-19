@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { 
-  User, 
+import {
+  User,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
@@ -8,7 +8,11 @@ import {
   sendPasswordResetEmail,
   updateProfile,
   signInWithPopup,
-  GoogleAuthProvider
+  signInWithRedirect,
+  getRedirectResult,
+  GoogleAuthProvider,
+  setPersistence,
+  browserLocalPersistence,
 } from "firebase/auth";
 import { auth } from "../firebase";
 
@@ -36,8 +40,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Configurar persistência no início
+  useEffect(() => {
+    setPersistence(auth, browserLocalPersistence).catch((error) => {
+      console.error("Erro ao configurar persistência:", error);
+    });
+  }, []);
+
   async function register(email: string, password: string, name: string) {
-    const { user } = await createUserWithEmailAndPassword(auth, email, password);
+    const { user } = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
     await updateProfile(user, { displayName: name });
   }
 
@@ -47,7 +62,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function loginWithGoogle() {
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    provider.setCustomParameters({
+      prompt: "select_account",
+    });
+
+    // Detectar se está em produção (Firebase Hosting)
+    const isProduction =
+      window.location.hostname.includes("web.app") ||
+      window.location.hostname.includes("firebaseapp.com");
+
+    if (isProduction) {
+      // Em produção, usar sempre redirect para evitar problemas de CORS
+      console.log(
+        "🔄 Ambiente de produção detectado, usando signInWithRedirect..."
+      );
+      await signInWithRedirect(auth, provider);
+      return;
+    }
+
+    // Em desenvolvimento, tentar popup primeiro
+    try {
+      console.log("🔄 Tentando login com popup...");
+      const result = await signInWithPopup(auth, provider);
+      console.log("✅ Login com popup bem-sucedido!", result.user.email);
+      return;
+    } catch (error: any) {
+      console.error("❌ Erro no popup:", error);
+
+      // Se falhar, usar redirect
+      console.log("🔄 Fallback para signInWithRedirect...");
+      await signInWithRedirect(auth, provider);
+    }
   }
 
   async function logout() {
@@ -59,12 +104,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setLoading(false);
+    let unsubscribe: (() => void) | undefined;
+    let mounted = true;
+
+    // Verificar resultado do redirect primeiro
+    const checkRedirect = async () => {
+      try {
+        console.log("🔍 Verificando resultado de redirect...");
+        const result = await getRedirectResult(auth);
+        if (result?.user && mounted) {
+          console.log("✅ Usuário logado via redirect:", result.user.email);
+          setCurrentUser(result.user);
+          // Forçar navegação após login bem-sucedido
+          setTimeout(() => {
+            window.location.href = "/dashboard";
+          }, 100);
+        }
+      } catch (error) {
+        console.error("❌ Erro no getRedirectResult:", error);
+      }
+    };
+
+    // Sempre verificar redirect ao carregar a página
+    checkRedirect().finally(() => {
+      // Configurar listener de autenticação
+      unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (mounted) {
+          console.log("👤 onAuthStateChanged:", user ? user.email : "null");
+          setCurrentUser(user);
+          setLoading(false);
+        }
+      });
     });
 
-    return unsubscribe;
+    return () => {
+      mounted = false;
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   const value = {
@@ -77,9 +153,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
